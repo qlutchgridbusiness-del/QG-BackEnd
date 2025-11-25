@@ -13,35 +13,44 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # 2. Use Node.js
+    # 2. Setup Node
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
         node-version: "20"
 
-    # 3. Install dependencies
+    # 3. Install dependencies (repo root)
     - name: Install dependencies
       run: npm install
 
-    # 4. Build NestJS app
-    - name: Build NestJS app
+    # 4. Build NestJS
+    - name: Build NestJS
       run: npm run build
 
-    # 5. Upload files to EC2 server
-    - name: Upload build to EC2
+    # 5. Upload dist to EC2
+    - name: Upload dist folder to EC2
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: "dist/**"
+        target: "${{ secrets.EC2_APP_DIR }}/dist"
+
+    # 6. Upload root-level backend files
+    - name: Upload config files to EC2
       uses: appleboy/scp-action@v0.1.4
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         source: |
-          dist/**
           package.json
           package-lock.json
           ecosystem.config.js
         target: ${{ secrets.EC2_APP_DIR }}
 
-    # 6. Restart server on EC2 using PM2
+    # 7. Restart API on EC2 using PM2
     - name: Restart backend on EC2
       uses: appleboy/ssh-action@v0.1.4
       with:
