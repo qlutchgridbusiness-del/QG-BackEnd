@@ -9,39 +9,43 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Checkout code
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # 2. Use Node.js
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
         node-version: "20"
 
-    # 3. Install dependencies
     - name: Install dependencies
+      working-directory: QG-BackEnd
       run: npm install
 
-    # 4. Build NestJS app
     - name: Build NestJS app
+      working-directory: QG-BackEnd
       run: npm run build
 
-    # 5. Upload files to EC2 server
     - name: Upload build to EC2
       uses: appleboy/scp-action@v0.1.4
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
+        source: "QG-BackEnd/dist/**"
+        target: "${{ secrets.EC2_APP_DIR }}/dist"
+
+    - name: Upload package files
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
         source: |
-          dist/**
-          package.json
-          package-lock.json
-          ecosystem.config.js
+          QG-BackEnd/package.json
+          QG-BackEnd/package-lock.json
+          QG-BackEnd/ecosystem.config.js
         target: ${{ secrets.EC2_APP_DIR }}
 
-    # 6. Restart server on EC2 using PM2
     - name: Restart backend on EC2
       uses: appleboy/ssh-action@v0.1.4
       with:
