@@ -47,19 +47,11 @@ jobs:
         source: "./*"
         target: ${{ secrets.EC2_APP_DIR }}
 
-        # DEBUG 1: Check key length
-    - name: Debug Key length
-      run: echo "${{ secrets.EC2_SSH_KEY }}" | wc -c
-
-    # DEBUG 2: Check if GitHub is masking the key
-    - name: Debug First line masked?
+    - name: Prepare SSH key
       run: |
-        echo "${{ secrets.EC2_SSH_KEY }}" | head -n 1 | sed 's/./*/g'
+        echo "${{ secrets.EC2_SSH_KEY_B64 }}" | base64 -d > private.pem
+        chmod 600 private.pem
 
-    # DEBUG 3: Look for CRLF or weird chars
-    - name: Debug CRLF check
-      run: |
-        echo "${{ secrets.EC2_SSH_KEY }}" | sed -n l
 
 
     - name: Restart backend on EC2
