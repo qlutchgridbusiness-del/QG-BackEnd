@@ -15,7 +15,7 @@ import { ServiceModule } from './components/services/services.module';
     // 👇 Register TypeORM with your DB config
     TypeOrmModule.forRoot({
       type: 'postgres', // or 'mysql', etc.
-      host: process.env.DB_HOST || 'localhost',
+      host: process.env.DB_HOST || '127.0.0.1',
       port: parseInt(process.env.DB_PORT) || 5432,
       username: process.env.DB_USER || 'abhisheksh',
       password: process.env.DB_PASS || '',
