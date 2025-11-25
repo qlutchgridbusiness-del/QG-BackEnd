@@ -48,7 +48,7 @@ jobs:
         target: ${{ secrets.EC2_APP_DIR }}
 
     - name: Restart backend on EC2
-      uses: appleboy/ssh-action@v0.1.4
+      uses: fifsky/ssh-action@master
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
