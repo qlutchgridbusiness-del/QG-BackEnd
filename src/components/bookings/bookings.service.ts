@@ -17,14 +17,10 @@ export class BookingsService {
 
   async create(dto: CreateBookingDto) {
     // ✅ 1. Fetch service to derive businessId
-    console.log("servicecheck------->", dto.serviceId);
     const service = await this.serviceRepo.findOne({
       where: { id: dto.serviceId },
       relations: ['business'], // ensure you get business relation
     });
-        console.log("servicecheck------->", service);
-
-
     if (!service) throw new NotFoundException('Service not found');
 
     // ✅ 2. Create booking with derived businessId

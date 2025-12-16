@@ -15,10 +15,11 @@ import {
 import { BusinessService } from './business.service';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { CreateBusinessDto } from './business.dto';
 
 @Controller('business')
 export class BusinessController {
-  constructor(private readonly businessService: BusinessService) { }
+  constructor(private readonly businessService: BusinessService) {}
 
   // 🔹 Create new business
   @Post()
@@ -31,21 +32,9 @@ export class BusinessController {
       },
     },
   })
-  async createBusiness(
-    @Body()
-    body: {
-      name: string;
-      ownerId: string;
-      phone: string;
-      email: string;
-    },
-  ) {
-    return this.businessService.createBusiness(
-      body.name,
-      body.ownerId,
-      body.phone,
-      body.email,
-    );
+  async createBusiness(@Req() req, @Body() body: CreateBusinessDto) {
+    const ownerId = req.user.id; // from auth guard
+    return this.businessService.createBusiness(ownerId, body);
   }
 
   // 🔹 Update business
@@ -120,21 +109,21 @@ export class BusinessController {
   }
 
   // 🔹 Upload social content
-  @Post(":id/social")
-  @ApiConsumes("application/json")
+  @Post(':id/social')
+  @ApiConsumes('application/json')
   @ApiBody({
     schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        caption: { type: "string" },
+        caption: { type: 'string' },
         files: {
-          type: "array",
+          type: 'array',
           items: {
-            type: "object",
+            type: 'object',
             properties: {
-              base64: { type: "string", description: "Base64 encoded file" },
-              filename: { type: "string", example: "photo.png" },
-              mimetype: { type: "string", example: "image/png" },
+              base64: { type: 'string', description: 'Base64 encoded file' },
+              filename: { type: 'string', example: 'photo.png' },
+              mimetype: { type: 'string', example: 'image/png' },
             },
           },
         },
@@ -142,7 +131,7 @@ export class BusinessController {
     },
   })
   async uploadSocialContent(
-    @Param("id") businessId: string,
+    @Param('id') businessId: string,
     @Body()
     body: {
       caption?: string;

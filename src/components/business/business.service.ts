@@ -87,28 +87,34 @@ export class BusinessService {
   }
 
   // 🔹 Create business
-  async createBusiness(
-    name: string,
-    ownerId: string,
-    email?: string,
-    phone?: string,
-  ) {
-    // 1. Find the owner (User entity)
-    const owner = await this.userRepo.findOne({ where: { id: ownerId } });
+  // src/components/business/business.service.ts
+  async createBusiness(ownerId: string, dto: CreateBusinessDto) {
+    const owner = await this.userRepo.findOne({
+      where: { id: ownerId },
+    });
+
     if (!owner) {
       throw new Error('Owner not found');
     }
 
-    // 2. Create the business
-    const newBusiness = this.businessRepo.create({
-      name,
-      email,
-      phone,
-      owner, // ✅ set relation instead of ownerId
+    const business = this.businessRepo.create({
+      name: dto.name,
+      email: dto.email,
+      phone: dto.phone,
+      category: dto.category,
+      address: dto.address,
+      pancard: dto.pancard,
+      aadhaarCard: dto.aadhaarCard,
+      gst: dto.gst,
+      openingHours: dto.openingHours,
+      logoKey: dto.logoKey,
+      coverKey: dto.coverKey,
+      latitude: dto.latitude ? Number(dto.latitude) : null,
+      longitude: dto.longitude ? Number(dto.longitude) : null,
+      owner,
     });
 
-    // 3. Save to DB
-    return await this.businessRepo.save(newBusiness);
+    return await this.businessRepo.save(business);
   }
 
   // 🔹 Update business
@@ -137,7 +143,7 @@ export class BusinessService {
 
     if (businessId) {
       business = await this.businessRepo.findOne({ where: { id: businessId } });
-      if (!business) throw new Error("Business not found");
+      if (!business) throw new Error('Business not found');
     }
 
     const posts = [];
@@ -146,13 +152,13 @@ export class BusinessService {
         file.base64,
         file.filename,
         file.mimetype,
-        "social",
+        'social',
       );
 
       const post = this.socialRepo.create({
         business,
         url,
-        type: file.mimetype.startsWith("video") ? "video" : "image",
+        type: file.mimetype.startsWith('video') ? 'video' : 'image',
         caption,
       });
 
@@ -160,7 +166,7 @@ export class BusinessService {
     }
 
     await this.socialRepo.save(posts);
-    return { message: "Uploaded successfully", posts };
+    return { message: 'Uploaded successfully', posts };
   }
 
   // 🔹 Fetch feed

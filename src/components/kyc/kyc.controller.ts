@@ -1,23 +1,45 @@
-import { Body, Controller, Post } from '@nestjs/common';
+// src/components/kyc/kyc.controller.ts
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { KycService } from './kyc.service';
-import { RequestOtpDto, VerifyOtpDto } from './kyc.dto';
+import { VerifyPanDto, VerifyGstDto } from './kyc.dto';
 
+@ApiTags('KYC')
 @Controller('kyc')
 export class KycController {
   constructor(private readonly kycService: KycService) {}
 
-  @Post('aadhaar/request-otp')
-  requestOtp(@Body() dto: RequestOtpDto) {
-    return this.kycService.requestAadhaarOtp(dto.aadhaarNumber);
-  }
-
-  @Post('aadhaar/verify-otp')
-  verifyOtp(@Body() dto: VerifyOtpDto) {
-    return this.kycService.verifyAadhaarOtp(dto.aadhaarNumber, dto.txnId, dto.otp);
-  }
-
+  /* ================= PAN ================= */
   @Post('pan/verify')
-  verifyPan(@Body('panNumber') panNumber: string) {
-    return this.kycService.verifyPan(panNumber);
+  @ApiOperation({ summary: 'Verify PAN using Surepass' })
+  @ApiResponse({ status: 200, description: 'PAN verified' })
+  verifyPan(
+    @Query('businessId') businessId: string,
+    @Body() dto: VerifyPanDto,
+  ) {
+    return this.kycService.verifyPan(businessId, dto.panNumber);
+  }
+
+  /* ================= GST ================= */
+  @Post('gst/verify')
+  @ApiOperation({ summary: 'Verify GST using Surepass' })
+  verifyGst(
+    @Query('businessId') businessId: string,
+    @Body() dto: VerifyGstDto,
+  ) {
+    return this.kycService.verifyGst(businessId, dto.gstNumber);
+  }
+
+  /* ================= AADHAAR ================= */
+  @Get('aadhaar/digilocker')
+  @ApiOperation({ summary: 'Get DigiLocker consent URL' })
+  getDigilockerUrl(@Query('businessId') businessId: string) {
+    return this.kycService.generateDigilockerUrl(businessId);
+  }
+
+  @Post('aadhaar/digilocker/callback')
+  @ApiOperation({ summary: 'DigiLocker callback handler' })
+  digilockerCallback(@Body() payload: any) {
+    return this.kycService.digilockerCallback(payload);
   }
 }

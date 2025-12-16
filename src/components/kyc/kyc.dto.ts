@@ -1,11 +1,12 @@
-// request-otp.dto.ts
-export class RequestOtpDto {
-  aadhaarNumber: string;
+// src/components/kyc/kyc.dto.ts
+import { ApiProperty } from '@nestjs/swagger';
+
+export class VerifyPanDto {
+  @ApiProperty({ example: 'ABCDE1234F' })
+  panNumber: string;
 }
 
-// verify-otp.dto.ts
-export class VerifyOtpDto {
-  aadhaarNumber: string;
-  txnId: string;
-  otp: string;
+export class VerifyGstDto {
+  @ApiProperty({ example: '08AKWPJ1234H1ZN' })
+  gstNumber: string;
 }

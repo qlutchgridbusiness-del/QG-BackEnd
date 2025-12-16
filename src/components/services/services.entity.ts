@@ -15,6 +15,8 @@ export class Services {
   @Column('decimal', { precision: 10, scale: 2 })
   price: number;
 
-  @ManyToOne(() => Business, (business) => business.services, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Business, (business) => business.services, {
+    onDelete: 'CASCADE',
+  })
   business: Business;
 }

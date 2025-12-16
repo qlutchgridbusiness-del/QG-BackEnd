@@ -1,53 +1,53 @@
-  import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    CreateDateColumn,
-    UpdateDateColumn,
-    OneToMany,
-  } from 'typeorm';
-  import { Booking } from '../bookings/bookings.entity';
-  import { Business } from '../business/business.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
+import { Booking } from '../bookings/bookings.entity';
+import { Business } from '../business/business.entity';
 
-  @Entity('users')
-  export class User {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+@Entity('users')
+export class User {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column()
-    email: string;
+  @Column()
+  email: string;
 
-    // @Column()
-    // password: string;
+  // @Column()
+  // password: string;
 
-    @Column({ default: 'unknown' })
-    name: string;
+  @Column({ default: 'unknown' })
+  name: string;
 
-    @Column({ default: 'unknown' })
-    phone: string;
+  @Column({ default: 'unknown' })
+  phone: string;
 
-    @Column({ default: 'user' })
-    role: 'user' | 'business';
+  @Column({ default: 'user' })
+  role: 'user' | 'business';
 
-    // Business-specific fields
-    @Column({ nullable: true })
-    pancard?: string;
+  // Business-specific fields
+  @Column({ nullable: true })
+  pancard?: string;
 
-    @Column({ nullable: true })
-    aadhaarCard?: string;
+  @Column({ nullable: true })
+  aadhaarCard?: string;
 
-    @Column({ nullable: true })
-    gst?: string;
+  @Column({ nullable: true })
+  gst?: string;
 
-    @OneToMany(() => Booking, (booking) => booking.user)
-    bookings: Booking[];
+  @OneToMany(() => Booking, (booking) => booking.user)
+  bookings: Booking[];
 
-    @OneToMany(() => Business, (business) => business.owner)
-    businesses: Business[];
+  @OneToMany(() => Business, (business) => business.owner)
+  businesses: Business[];
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
-  }
+  @UpdateDateColumn()
+  updatedAt: Date;
+}
