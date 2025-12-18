@@ -8,14 +8,13 @@ import { RegisterDto, LoginDto, VerifyOtpDto } from './auth.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-@Post('verify-otp')
-@ApiBody({ type: VerifyOtpDto })
-@ApiResponse({ status: 200, description: 'OTP verified successfully' })
-async verifyOtp(@Body() dto: VerifyOtpDto) {
-  // No idToken here, just frontend verification
-return this.authService.verifyOtp(dto.phone, dto.idToken);
-}
-
+  @Post('verify-otp')
+  @ApiBody({ type: VerifyOtpDto })
+  @ApiResponse({ status: 200, description: 'OTP verified successfully' })
+  async verifyOtp(@Body() dto: VerifyOtpDto) {
+    // No idToken here, just frontend verification
+    return this.authService.verifyOtp(dto.phone, dto.idToken);
+  }
 
   @Post('register')
   @ApiBody({ type: RegisterDto })

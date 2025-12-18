@@ -1,13 +1,14 @@
-// src/components/kyc/kyc.module.ts
 import { Module } from '@nestjs/common';
-import { KycService } from './kyc.service';
-import { KycController } from './kyc.controller';
-import { Business } from '../business/business.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Business } from '../business/business.entity';
+import { BusinessKyc } from './business-kyc.entity';
+import { BusinessKycService } from './business-kyc.service';
+import { BusinessKycController } from './business-kyc.controller';
+import { KycService } from './kyc.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Business])],
-  providers: [KycService, Business],
-  controllers: [KycController],
+  imports: [TypeOrmModule.forFeature([Business, BusinessKyc])],
+  providers: [BusinessKycService, KycService],
+  controllers: [BusinessKycController],
 })
 export class KycModule {}

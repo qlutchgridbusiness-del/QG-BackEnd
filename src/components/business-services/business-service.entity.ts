@@ -72,7 +72,7 @@ export class BusinessServiceEntity {
   @ManyToOne(() => Business, (business) => business.services, { eager: true })
   business: Business;
 
-  @OneToMany(() => Booking, (booking) => booking.service)
+  @OneToMany(() => Booking, (b) => b.service)
   bookings: Booking[];
 
   @CreateDateColumn()

@@ -1,78 +1,65 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Business } from '../business/business.entity';
+import { Booking } from './bookings.entity';
 import { Repository } from 'typeorm';
-import { Booking, BookingStatus } from './bookings.entity';
-import { CreateBookingDto } from './bookings.dto';
 import { BusinessServiceEntity } from '../business-services/business-service.entity';
+import { CreateBookingDto } from './bookings.dto';
+import { BusinessStatus } from '../business/business-status.enum';
 
 @Injectable()
-export class BookingsService {
+export class BookingService {
   constructor(
     @InjectRepository(Booking)
-    private readonly bookingsRepo: Repository<Booking>,
+    private bookingRepo: Repository<Booking>,
+
+    @InjectRepository(Business)
+    private businessRepo: Repository<Business>,
 
     @InjectRepository(BusinessServiceEntity)
-    private readonly serviceRepo: Repository<BusinessServiceEntity>, // 👈 Add this
+    private serviceRepo: Repository<BusinessServiceEntity>,
   ) {}
 
-  async create(dto: CreateBookingDto) {
-    // ✅ 1. Fetch service to derive businessId
+  async createBooking(userId: string, dto: CreateBookingDto) {
+    const business = await this.businessRepo.findOne({
+      where: { id: dto.businessId },
+    });
+
+    if (!business) {
+      throw new NotFoundException('Business not found');
+    }
+
+    // 🔒 KYC LOCK
+    if (business.status !== BusinessStatus.ACTIVE) {
+      throw new ForbiddenException(
+        'Business is not verified yet. Booking not allowed.',
+      );
+    }
+
     const service = await this.serviceRepo.findOne({
       where: { id: dto.serviceId },
-      relations: ['business'], // ensure you get business relation
+      relations: ['business'],
     });
-    if (!service) throw new NotFoundException('Service not found');
 
-    // ✅ 2. Create booking with derived businessId
-    const booking = this.bookingsRepo.create({
-      userId: dto.userId,
-      businessId: service.business.id, // 👈 derive here
-      serviceId: dto.serviceId,
+    if (!service) {
+      throw new NotFoundException('Service not found');
+    }
+
+    if (service.business.id !== business.id) {
+      throw new ForbiddenException('Service does not belong to this business');
+    }
+
+    const booking = this.bookingRepo.create({
+      user: { id: userId } as any,
+      business,
+      service,
       scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : null,
-      status: 'created',
-      paymentStatus: 'pending',
     });
 
-    return this.bookingsRepo.save(booking);
-  }
-
-  async getAll() {
-    return this.bookingsRepo.find({
-      order: { createdAt: 'DESC' },
-      relations: ['service', 'user'], // optional but useful
-    });
-  }
-
-  async getById(id: string) {
-    const booking = await this.bookingsRepo.findOne({ where: { id } });
-    if (!booking) throw new NotFoundException('Booking not found');
-    return booking;
-  }
-
-  async updateStatus(id: string, status: BookingStatus) {
-    const booking = await this.getById(id);
-    booking.status = status;
-    return this.bookingsRepo.save(booking);
-  }
-
-  async requestReschedule(id: string, newDate: string) {
-    const booking = await this.getById(id);
-    booking.scheduledAt = new Date(newDate);
-    booking.status = 'reschedule_requested';
-    return this.bookingsRepo.save(booking);
-  }
-
-  async uploadPreServiceImage(id: string, imageUrl: string) {
-    const booking = await this.getById(id);
-    booking.preServiceImageUrl = imageUrl;
-    booking.status = 'in_service';
-    return this.bookingsRepo.save(booking);
-  }
-
-  async markCompleted(id: string, completionUrl: string) {
-    const booking = await this.getById(id);
-    booking.completionImageUrl = completionUrl;
-    booking.status = 'completed';
-    return this.bookingsRepo.save(booking);
+    return this.bookingRepo.save(booking);
   }
 }

@@ -1,13 +1,19 @@
+// src/components/user/user.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
 } from 'typeorm';
-import { Booking } from '../bookings/bookings.entity';
 import { Business } from '../business/business.entity';
+
+export enum UserRole {
+  USER = 'USER',
+  BUSINESS = 'BUSINESS',
+  ADMIN = 'ADMIN',
+}
 
 @Entity('users')
 export class User {
@@ -15,34 +21,28 @@ export class User {
   id: string;
 
   @Column()
-  email: string;
-
-  // @Column()
-  // password: string;
-
-  @Column({ default: 'unknown' })
   name: string;
 
-  @Column({ default: 'unknown' })
+  @Column({ unique: true })
+  email: string;
+
+  @Column({ nullable: true })
   phone: string;
 
-  @Column({ default: 'user' })
-  role: 'user' | 'business';
-
-  // Business-specific fields
-  @Column({ nullable: true })
-  pancard?: string;
-
-  @Column({ nullable: true })
-  aadhaarCard?: string;
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+    default: UserRole.USER,
+  })
+  role: UserRole;
 
   @Column({ nullable: true })
-  gst?: string;
+  passwordHash: string;
 
-  @OneToMany(() => Booking, (booking) => booking.user)
-  bookings: Booking[];
+  @Column({ default: true })
+  isActive: boolean;
 
-  @OneToMany(() => Business, (business) => business.owner)
+  @OneToMany(() => Business, (b) => b.owner)
   businesses: Business[];
 
   @CreateDateColumn()

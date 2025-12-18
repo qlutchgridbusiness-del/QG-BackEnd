@@ -1,32 +1,12 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsUUID, IsDateString } from 'class-validator';
 
 export class CreateBookingDto {
-  @ApiProperty()
-  userId: string;
-
-  @ApiProperty()
+  @IsUUID()
   businessId: string;
 
-  @ApiProperty()
+  @IsUUID()
   serviceId: string;
 
-  @ApiPropertyOptional()
-  scheduledAt?: string;
-
-  @ApiPropertyOptional()
-  proposedPrice?: string;
-}
-
-export class VerifyPaymentDto {
-  @ApiProperty()
-  bookingId: string;
-
-  @ApiProperty()
-  razorpay_order_id: string;
-
-  @ApiProperty()
-  razorpay_payment_id: string;
-
-  @ApiProperty()
-  razorpay_signature: string;
+  @IsDateString()
+  scheduledAt: string;
 }

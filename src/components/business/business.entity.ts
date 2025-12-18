@@ -1,19 +1,18 @@
-// src/components/business/business.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { User } from '../user/user.entity';
+import { BusinessStatus } from './business-status.enum';
+import { SocialPostEntity } from '../business-services/social-post.entity';
 import { BusinessServiceEntity } from '../business-services/business-service.entity';
 import { Booking } from '../bookings/bookings.entity';
-import { SocialPostEntity } from '../business-services/social-post.entity';
 
-// src/components/business/business.entity.ts
 @Entity('businesses')
 export class Business {
   @PrimaryGeneratedColumn('uuid')
@@ -28,21 +27,12 @@ export class Business {
   @Column({ nullable: true })
   phone?: string;
 
-  /* 🔹 NEW FIELDS */
-
-  @Column('text', { array: true, nullable: true })
-  category?: string[];
-
-  @Column({ nullable: true })
-  address?: string;
-
+  // 🔐 KYC
   @Column({ nullable: true })
   pancard?: string;
 
   @Column({ nullable: true })
-  aadhaarCard?: string;
-
-  // src/components/business/business.entity.ts
+  gst?: string;
 
   @Column({ default: false })
   panVerified: boolean;
@@ -50,50 +40,37 @@ export class Business {
   @Column({ default: false })
   gstVerified: boolean;
 
-  @Column({ default: false })
-  aadhaarVerified: boolean;
+  @Column({
+    type: 'enum',
+    enum: BusinessStatus,
+    default: BusinessStatus.DRAFT,
+  })
+  status: BusinessStatus;
 
   @Column({ nullable: true })
-  aadhaarLast4?: string;
-
-  @Column({ nullable: true })
-  verifiedName?: string;
-
-  @Column({ nullable: true })
-  gst?: string;
-
-  @Column({ type: 'jsonb', nullable: true })
-  openingHours?: Record<string, any>;
-
-  @Column({ nullable: true })
-  logoKey?: string;
-
-  @Column({ nullable: true })
-  coverKey?: string;
-
-  @Column('decimal', { precision: 10, scale: 6, nullable: true })
-  latitude?: number;
-
-  @Column('decimal', { precision: 10, scale: 6, nullable: true })
-  longitude?: number;
-
-  /* 🔹 RELATIONS */
+  kycRejectReason?: string;
 
   @ManyToOne(() => User, (u) => u.businesses, { eager: true })
   owner: User;
-
-  @OneToMany(() => BusinessServiceEntity, (s) => s.business)
-  services: BusinessServiceEntity[];
-
-  @OneToMany(() => SocialPostEntity, (post) => post.business)
-  socialPosts: SocialPostEntity[];
-
-  @OneToMany(() => Booking, (b) => b.business)
-  bookings: Booking[];
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column('decimal', { precision: 10, scale: 6, nullable: true })
+  latitude: number;
+
+  @Column('decimal', { precision: 10, scale: 6, nullable: true })
+  longitude: number;
+
+  @OneToMany(() => BusinessServiceEntity, (s) => s.business)
+  services: BusinessServiceEntity[];
+
+  @OneToMany(() => SocialPostEntity, (p) => p.business)
+  socialPosts: SocialPostEntity[];
+
+  @OneToMany(() => Booking, (b) => b.business)
+  bookings: Booking[];
 }

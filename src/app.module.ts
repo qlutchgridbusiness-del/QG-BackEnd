@@ -7,6 +7,7 @@ import { BusinessModule } from './components/business/business.module';
 import { PaymentsModule } from './components/payments/payments.module';
 import { KycModule } from './components/kyc/kyc.module';
 import { ServiceModule } from './components/services/services.module';
+import { AdminModule } from './components/admin/admin.module';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { ServiceModule } from './components/services/services.module';
       logging: true,
       migrationsRun: false,
     }),
-
+    AdminModule,
     AuthModule,
     BookingsModule,
     BusinessModule,

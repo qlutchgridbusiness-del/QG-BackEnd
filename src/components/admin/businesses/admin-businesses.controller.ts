@@ -1,0 +1,45 @@
+import { Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
+import { AdminBusinessesService } from './admin-businesses.service';
+import { AdminActionResponseDto } from '../dto/admin-response.dto';
+import { AdminBusinessDto } from './admin-businesses.dto';
+
+@ApiTags('Admin – Businesses')
+@Controller('admin/businesses')
+export class AdminBusinessesController {
+  constructor(private readonly service: AdminBusinessesService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'List all businesses' })
+  @ApiOkResponse({ type: [AdminBusinessDto] })
+  listBusinesses() {
+    return this.service.listBusinesses();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get business details' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiOkResponse({ type: AdminBusinessDto })
+  getBusiness(@Param('id') id: string) {
+    return this.service.getBusiness(id);
+  }
+
+  @Post(':id/activate')
+  @ApiOperation({ summary: 'Activate business' })
+  @ApiOkResponse({ type: AdminActionResponseDto })
+  activate(@Param('id') id: string) {
+    return this.service.activateBusiness(id);
+  }
+
+  @Post(':id/suspend')
+  @ApiOperation({ summary: 'Suspend business' })
+  @ApiOkResponse({ type: AdminActionResponseDto })
+  suspend(@Param('id') id: string) {
+    return this.service.suspendBusiness(id);
+  }
+}

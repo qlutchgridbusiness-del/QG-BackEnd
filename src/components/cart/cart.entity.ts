@@ -1,31 +1,23 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
   CreateDateColumn,
-  UpdateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
+import { User } from '../user/user.entity';
+import { BusinessServiceEntity } from '../business-services/business-service.entity';
 
-@Entity('cart_item')
+@Entity('cart_items')
 export class CartItem {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  userId: string;
+  @ManyToOne(() => User, { eager: true })
+  user: User;
 
-  @Column()
-  serviceId: string;
+  @ManyToOne(() => BusinessServiceEntity, { eager: true })
+  service: BusinessServiceEntity;
 
-  @Column()
-  businessId: string;
-
-  @Column('int', { default: 1 })
-  qty: number;
-
-  @Column('decimal', { nullable: true })
-  price: number;
-
-  @CreateDateColumn() createdAt: Date;
-  @UpdateDateColumn() updatedAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 }

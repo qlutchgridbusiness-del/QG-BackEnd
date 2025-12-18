@@ -1,13 +1,9 @@
 // auth.service.ts
-import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from '../user/user.entity';
+import { User, UserRole } from '../user/user.entity';
 import { Business } from '../business/business.entity';
 import { FirebaseService } from '../firebase/firebase.service';
 import { RegisterDto } from './auth.dto';
@@ -63,14 +59,8 @@ export class AuthService {
         phone: dto.phone,
         name: dto.name,
         email: dto.email,
-        role: dto.role,
+        role: dto.role === 'business' ? UserRole.BUSINESS : UserRole.USER,
       };
-
-      if (dto.role === 'business') {
-        userData.pancard = dto.pancard;
-        userData.aadhaarCard = dto.aadhaarCard;
-        userData.gst = dto.gst;
-      }
 
       user = this.userRepo.create(userData);
       await this.userRepo.save(user);
