@@ -30,7 +30,7 @@ export class AdminBusinessesService {
 
   async suspendBusiness(id: string) {
     await this.getBusiness(id);
-    await this.businesses.update(id, { status: BusinessStatus.REJECTED });
+    await this.businesses.update(id, { status: BusinessStatus.KYC_REJECTED });
     return { message: 'Business suspended' };
   }
 }

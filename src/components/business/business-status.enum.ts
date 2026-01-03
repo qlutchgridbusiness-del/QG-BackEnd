@@ -1,14 +1,18 @@
 export enum BusinessStatus {
-  DRAFT = 'DRAFT',
-  KYC_PENDING = 'KYC_PENDING',
+  DRAFT = 'DRAFT', // created, incomplete
+  PROFILE_COMPLETED = 'PROFILE_COMPLETED', // details + services added
+  KYC_PENDING = 'KYC_PENDING', // docs uploaded
   KYC_UNDER_REVIEW = 'KYC_UNDER_REVIEW',
-  ACTIVE = 'ACTIVE',
-  REJECTED = 'REJECTED',
-  CONTRACT_SIGNED = 'CONTRACT_SIGNED',
+  KYC_REJECTED = 'KYC_REJECTED',
+  CONTRACT_PENDING = 'CONTRACT_PENDING',
+  ACTIVE = 'ACTIVE', // visible & bookable
+  SUSPENDED = 'SUSPENDED', // admin action
+  DEACTIVATED = 'DEACTIVATED', // business closed
 }
 
 export enum ServiceStatus {
-  DRAFT, // added during registration
-  ACTIVE, // visible & bookable
-  DISABLED, // business turned off
+  DRAFT = 'DRAFT', // added during onboarding
+  ACTIVE = 'ACTIVE', // bookable
+  DISABLED = 'DISABLED', // business turned off
+  BLOCKED = 'BLOCKED', // admin blocked
 }

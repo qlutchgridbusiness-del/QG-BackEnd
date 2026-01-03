@@ -2,10 +2,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BusinessStatus } from './business-status.enum';
+import { BusinessStatus, ServiceStatus } from './business-status.enum';
 import { Business } from './business.entity';
 import { CreateBusinessDto } from './business.dto';
 import { User } from '../user/user.entity';
+import { Services } from '../services/services.entity';
+import { CreateServiceDto } from '../services/services.dto';
 
 @Injectable()
 export class BusinessService {
@@ -14,6 +16,8 @@ export class BusinessService {
     private readonly businessRepo: Repository<Business>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(Services)
+    private readonly serviceRepo: Repository<Services>,
   ) {}
 
   async createBusiness(ownerId: string, dto: CreateBusinessDto) {
@@ -31,9 +35,21 @@ export class BusinessService {
     return this.businessRepo.save(business);
   }
 
-  async updateBusiness(id: string, dto: Partial<CreateBusinessDto>) {
-    const business = await this.businessRepo.findOne({ where: { id } });
-    if (!business) throw new NotFoundException('Business not found');
+  async updateBusiness(
+    ownerId: string,
+    id: string,
+    dto: Partial<CreateBusinessDto>,
+  ) {
+    const business = await this.businessRepo.findOne({
+      where: { id, owner: { id: ownerId } },
+    });
+
+    if (!business) {
+      throw new NotFoundException('Business not found or not owned by user');
+    }
+
+    // NEVER allow status changes from business side
+    delete (dto as any).status;
 
     Object.assign(business, dto);
     return this.businessRepo.save(business);
@@ -43,14 +59,6 @@ export class BusinessService {
     return this.businessRepo.find({
       where: { owner: { id: ownerId } },
     });
-  }
-
-  async approveBusiness(id: string) {
-    const business = await this.businessRepo.findOne({ where: { id } });
-    if (!business) throw new NotFoundException('Business not found');
-
-    business.status = BusinessStatus.ACTIVE;
-    return this.businessRepo.save(business);
   }
 
   async getNearbyBusinesses(lat: number, lng: number, radiusKm = 10) {
@@ -71,5 +79,43 @@ export class BusinessService {
         status: BusinessStatus.ACTIVE,
       })
       .getMany();
+  }
+  async addServices(
+    ownerId: string,
+    businessId: string,
+    services: CreateServiceDto[],
+  ) {
+    const business = await this.businessRepo.findOne({
+      where: { id: businessId, owner: { id: ownerId } },
+      relations: ['services'],
+    });
+
+    if (!business) {
+      throw new NotFoundException('Business not found or not owned by user');
+    }
+
+    const entities = services.map((s) =>
+      this.serviceRepo.create({
+        ...s,
+        business,
+        status: ServiceStatus.DRAFT,
+      }),
+    );
+
+    await this.serviceRepo.save(entities);
+
+    await this.serviceRepo.save(entities);
+
+    // 🔥 Enforce minimum services rule
+    const totalServices = await this.serviceRepo.count({
+      where: { business: { id: businessId } },
+    });
+
+    if (totalServices >= 3 && business.status === BusinessStatus.DRAFT) {
+      business.status = BusinessStatus.PROFILE_COMPLETED;
+      await this.businessRepo.save(business);
+    }
+
+    return { success: true, totalServices };
   }
 }

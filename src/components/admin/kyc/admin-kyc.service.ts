@@ -57,7 +57,7 @@ export class AdminKycService {
     kyc.status = 'REJECTED';
     kyc.rejectionReason = reason;
 
-    kyc.business.status = BusinessStatus.REJECTED;
+    kyc.business.status = BusinessStatus.KYC_REJECTED;
 
     await this.businessRepo.save(kyc.business);
     await this.kycRepo.save(kyc);

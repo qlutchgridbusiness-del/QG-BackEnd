@@ -1,4 +1,10 @@
-import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { ServicesService } from './services.service';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { Services } from './services.entity';
@@ -28,9 +34,7 @@ export class ServicesController {
     description: 'List of matching services',
     type: [Services],
   })
-  async getAllServices(
-    @Query('search') search?: string,
-  ) {
+  async getAllServices(@Query('search') search?: string) {
     return this.servicesService.findFiltered(search);
   }
 
@@ -47,10 +51,11 @@ export class ServicesController {
     type: Services,
   })
   async getServiceById(@Param('id') id: string) {
-    console.log("check50", id);
+    console.log('check50', id);
     const service = await this.servicesService.findOneById(id);
-    console.log("check52", id);
-    if (!service) throw new NotFoundException(`Service with ID ${id} not found`);
+    console.log('check52', id);
+    if (!service)
+      throw new NotFoundException(`Service with ID ${id} not found`);
     return service;
   }
 }
