@@ -1,42 +1,38 @@
 // src/components/user/user.service.ts
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
-
 import { User } from './user.entity';
-import { CreateUserDto } from './create-user.dto';
+import { Booking } from '../bookings/bookings.entity';
+import { UpdateUserProfileDto } from './create-user.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
+    private readonly users: Repository<User>,
+
+    @InjectRepository(Booking)
+    private readonly bookings: Repository<Booking>,
   ) {}
 
-  async createUser(dto: CreateUserDto): Promise<User> {
-    const existing = await this.userRepo.findOne({
-      where: [{ email: dto.email }, { phone: dto.phone }],
-    });
-
-    if (existing) {
-      throw new BadRequestException('User already exists');
-    }
-
-    const passwordHash = await bcrypt.hash(dto.password, 10);
-
-    const user = this.userRepo.create({
-      name: dto.name,
-      email: dto.email,
-      phone: dto.phone,
-      role: dto.role,
-      passwordHash,
-    });
-
-    return this.userRepo.save(user);
+  async getById(id: string) {
+    const user = await this.users.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
   }
 
-  async findById(id: string) {
-    return this.userRepo.findOne({ where: { id } });
+  async update(id: string, dto: UpdateUserProfileDto) {
+    const user = await this.getById(id);
+    Object.assign(user, dto);
+    return this.users.save(user);
+  }
+
+  async getMyBookings(userId: string) {
+    return this.bookings.find({
+      where: { user: { id: userId } },
+      relations: ['business', 'service'],
+      order: { createdAt: 'DESC' },
+    });
   }
 }

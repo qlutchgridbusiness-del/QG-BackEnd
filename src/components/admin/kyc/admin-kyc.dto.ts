@@ -1,16 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { KycStatus } from './kyc-status.enum';
 
 export class AdminKycDto {
-  @ApiProperty()
+  @ApiProperty({ example: 'uuid-business-id' })
   businessId: string;
 
-  @ApiProperty()
-  status: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  @ApiProperty({
+    enum: KycStatus,
+    example: KycStatus.PENDING,
+  })
+  status: KycStatus;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({
+    required: false,
+    example: 'PAN mismatch',
+  })
   rejectionReason?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: '2026-01-03T10:30:00.000Z',
+  })
   createdAt: Date;
 }
 

@@ -101,7 +101,7 @@ export class CartService {
         business: item.service.business,
         service: item.service,
         scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-        status: BookingStatus.CREATED,
+        status: BookingStatus.REQUESTED,
       });
 
       const saved = await this.bookingRepo.save(booking);
