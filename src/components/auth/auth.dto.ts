@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class SendOtpDto {
   @ApiProperty()
@@ -25,7 +25,6 @@ export class RegisterDto {
   latitude?: number;
   longitude?: number;
 }
-
 
 export class LoginDto {
   @ApiProperty()

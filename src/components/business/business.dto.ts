@@ -1,45 +1,49 @@
-// src/components/business/dto/create-business.dto.ts
-import { IsOptional, IsString, IsArray, IsObject } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateBusinessDto {
-  @IsString()
+  @ApiProperty({ example: 'Adani Enterprises' })
   name: string;
 
-  @IsOptional()
-  email?: string;
-
-  @IsOptional()
+  @ApiPropertyOptional({ example: '09177391664' })
   phone?: string;
 
-  @IsOptional()
-  @IsArray()
+  @ApiPropertyOptional({ example: 'info@company.com' })
+  email?: string;
+
+  @ApiPropertyOptional({
+    example: ['Garage / Mechanic', 'Painting'],
+    isArray: true,
+  })
   category?: string[];
 
-  @IsOptional()
+  @ApiPropertyOptional()
   address?: string;
 
-  @IsOptional()
+  @ApiPropertyOptional()
   latitude?: string;
 
-  @IsOptional()
+  @ApiPropertyOptional()
   longitude?: string;
 
-  @IsOptional()
+  @ApiPropertyOptional()
   pancard?: string;
 
-  @IsOptional()
+  @ApiPropertyOptional()
   aadhaarCard?: string;
 
-  @IsOptional()
+  @ApiPropertyOptional()
   gst?: string;
 
-  @IsOptional()
-  @IsObject()
+  @ApiPropertyOptional({
+    example: {
+      mon: { open: true, from: '09:00', to: '18:00' },
+    },
+  })
   openingHours?: Record<string, any>;
 
-  @IsOptional()
+  @ApiPropertyOptional()
   logoKey?: string;
 
-  @IsOptional()
+  @ApiPropertyOptional()
   coverKey?: string;
 }

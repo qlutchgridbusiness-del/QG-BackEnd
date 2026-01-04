@@ -1,4 +1,13 @@
-import { Controller, Post, Body, Req, Put, Param, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  Put,
+  Param,
+  Get,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -13,9 +22,11 @@ import {
 import { BusinessService } from './business.service';
 import { CreateBusinessDto } from './business.dto';
 import { Business } from './business.entity';
+import { JwtAuthGuard } from '../auth/jwt.auth-guard';
 
 @ApiTags('Business')
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard) // ✅ THIS FIXES req.user
 @Controller('business')
 export class BusinessController {
   constructor(private readonly businessService: BusinessService) {}

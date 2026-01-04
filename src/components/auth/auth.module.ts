@@ -9,10 +9,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { FirebaseService } from '../firebase/firebase.service';
 import { VerificationService } from '../verification/verification.service';
 import { Business } from '../business/business.entity';
+import { PassportModule } from '@nestjs/passport';
+import { JwtStrategy } from './jwt.strategy';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }), // loads .env
+    PassportModule.register({ defaultStrategy: 'jwt' }), // ✅ ADD THIS
     TypeOrmModule.forFeature([User, Otp, Business]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -24,7 +27,7 @@ import { Business } from '../business/business.entity';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, FirebaseService, VerificationService],
+  providers: [AuthService, FirebaseService, VerificationService, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}
