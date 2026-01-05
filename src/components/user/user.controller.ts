@@ -1,5 +1,5 @@
 // src/components/user/user.controller.ts
-import { Controller, Get, Put, Req, Body } from '@nestjs/common';
+import { Controller, Get, Put, Req, Body, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -8,9 +8,11 @@ import {
 } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { UserProfileDto, UpdateUserProfileDto } from './create-user.dto';
+import { JwtAuthGuard } from '../auth/jwt.auth-guard';
 
 @ApiTags('Users')
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard) // ✅ THIS IS THE FIX
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
