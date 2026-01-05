@@ -102,4 +102,72 @@ export class BookingService {
 
     return this.bookingRepo.save(booking);
   }
+
+  // src/components/bookings/bookings.service.ts
+
+  async getBookingsForBusinessOwner(ownerId: string) {
+    return this.bookingRepo.find({
+      where: {
+        business: {
+          owner: { id: ownerId },
+        },
+      },
+      relations: ['user', 'service', 'business'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async acceptBooking(ownerId: string, bookingId: string) {
+    const booking = await this.getBusinessBooking(ownerId, bookingId);
+
+    if (booking.status !== BookingStatus.REQUESTED) {
+      throw new ForbiddenException('Cannot accept booking');
+    }
+
+    booking.status = BookingStatus.ACCEPTED;
+    return this.bookingRepo.save(booking);
+  }
+
+  async rejectBooking(ownerId: string, bookingId: string, reason: string) {
+    const booking = await this.getBusinessBooking(ownerId, bookingId);
+
+    if (booking.status !== BookingStatus.REQUESTED) {
+      throw new ForbiddenException('Cannot reject booking');
+    }
+
+    booking.status = BookingStatus.REJECTED;
+    booking.cancelReason = reason;
+
+    return this.bookingRepo.save(booking);
+  }
+
+  async completeBooking(ownerId: string, bookingId: string) {
+    const booking = await this.getBusinessBooking(ownerId, bookingId);
+
+    if (
+      booking.status !== BookingStatus.ACCEPTED &&
+      booking.status !== BookingStatus.IN_PROGRESS
+    ) {
+      throw new ForbiddenException('Cannot complete booking');
+    }
+
+    booking.status = BookingStatus.COMPLETED;
+    return this.bookingRepo.save(booking);
+  }
+
+  // 🔐 Internal guard
+  private async getBusinessBooking(ownerId: string, bookingId: string) {
+    const booking = await this.bookingRepo.findOne({
+      where: { id: bookingId },
+      relations: ['business', 'business.owner'],
+    });
+
+    if (!booking) throw new NotFoundException('Booking not found');
+
+    if (booking.business.owner.id !== ownerId) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    return booking;
+  }
 }

@@ -21,6 +21,7 @@ import {
   ApiBody,
   getSchemaPath,
   ApiExtraModels,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { BusinessService } from './business.service';
 import { CreateBusinessDto } from './business.dto';
@@ -28,6 +29,7 @@ import { Business } from './business.entity';
 import { JwtAuthGuard } from '../auth/jwt.auth-guard';
 import { CreateServiceDto } from '../services/services.dto';
 import { AddServicesDto } from '../services/add-services.dto';
+import { Services } from '../services/services.entity';
 
 @ApiTags('Business')
 @ApiBearerAuth()
@@ -147,5 +149,74 @@ export class BusinessController {
       businessId,
       body.services,
     );
+  }
+
+  @Put('services/:serviceId')
+  @ApiOperation({ summary: 'Update service (owner only)' })
+  @ApiBearerAuth()
+  @ApiParam({
+    name: 'serviceId',
+    description: 'Service ID',
+    example: '61c1b692-7967-444d-85a1-814bd15d803b',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', example: 'Premium Car Wash' },
+        price: { type: 'number', example: 499 },
+        durationMinutes: { type: 'number', example: 45 },
+        available: { type: 'boolean', example: true },
+      },
+    },
+  })
+  @ApiOkResponse({
+    description: 'Service updated successfully',
+    type: Services,
+  })
+  @ApiNotFoundResponse({ description: 'Service not found' })
+  @ApiForbiddenResponse({ description: 'Not owner of this service' })
+  updateService(
+    @Req() req,
+    @Param('serviceId') serviceId: string,
+    @Body() dto: Partial<CreateServiceDto>,
+  ) {
+    return this.businessService.updateService(req.user.id, serviceId, dto);
+  }
+
+  @Get(':id/services')
+  @ApiOperation({ summary: 'Get services of my business' })
+  @ApiBearerAuth()
+  @ApiParam({
+    name: 'id',
+    description: 'Business ID',
+    example: 'c034d02a-6170-4756-ad0c-707c09f85934',
+  })
+  @ApiOkResponse({
+    description: 'List of services',
+    type: [Services],
+  })
+  @ApiNotFoundResponse({ description: 'Business not found' })
+  @ApiForbiddenResponse({ description: 'Not owner of this business' })
+  getMyServices(@Req() req, @Param('id') id: string) {
+    return this.businessService.getServices(req.user.id, id);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get my business by ID' })
+  @ApiBearerAuth()
+  @ApiParam({
+    name: 'id',
+    description: 'Business ID',
+    example: 'c034d02a-6170-4756-ad0c-707c09f85934',
+  })
+  @ApiOkResponse({
+    description: 'Business details',
+    type: Business,
+  })
+  @ApiNotFoundResponse({ description: 'Business not found' })
+  @ApiForbiddenResponse({ description: 'Not owner of this business' })
+  getBusiness(@Req() req, @Param('id') id: string) {
+    return this.businessService.getBusinessById(req.user.id, id);
   }
 }

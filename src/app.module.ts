@@ -23,7 +23,7 @@ import { UserModule } from './components/user/user.module';
       password: process.env.DB_PASS || '',
       database: process.env.DB_NAME || 'qlutch_grid',
       autoLoadEntities: true,
-      synchronize: true, // ❗ auto-create tables in dev, disable in prod
+      synchronize: false, // ❗ auto-create tables in dev, disable in prod
       logging: true,
       migrationsRun: false,
     }),

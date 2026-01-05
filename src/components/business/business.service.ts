@@ -1,5 +1,9 @@
 // src/components/business/business.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BusinessStatus, ServiceStatus } from './business-status.enum';
@@ -117,5 +121,38 @@ export class BusinessService {
     }
 
     return { success: true, totalServices };
+  }
+
+  async getBusinessById(ownerId: string, businessId: string) {
+    const business = await this.businessRepo.findOne({
+      where: { id: businessId, owner: { id: ownerId } },
+    });
+    if (!business) throw new NotFoundException();
+    return business;
+  }
+
+  async getServices(ownerId: string, businessId: string) {
+    const business = await this.businessRepo.findOne({
+      where: { id: businessId, owner: { id: ownerId } },
+    });
+    if (!business) throw new ForbiddenException();
+
+    return this.serviceRepo.find({
+      where: { business: { id: business.id } },
+      order: { name: 'ASC' },
+    });
+  }
+
+  async updateService(ownerId: string, serviceId: string, dto: any) {
+    const service = await this.serviceRepo.findOne({
+      where: { id: serviceId },
+      relations: ['business'],
+    });
+
+    if (!service) throw new NotFoundException();
+    if (service.business.owner.id !== ownerId) throw new ForbiddenException();
+
+    Object.assign(service, dto);
+    return this.serviceRepo.save(service);
   }
 }
