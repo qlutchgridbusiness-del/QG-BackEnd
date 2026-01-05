@@ -20,15 +20,18 @@ import {
   ApiNotFoundResponse,
   ApiBody,
   getSchemaPath,
+  ApiExtraModels,
 } from '@nestjs/swagger';
 import { BusinessService } from './business.service';
 import { CreateBusinessDto } from './business.dto';
 import { Business } from './business.entity';
 import { JwtAuthGuard } from '../auth/jwt.auth-guard';
 import { CreateServiceDto } from '../services/services.dto';
+import { AddServicesDto } from '../services/add-services.dto';
 
 @ApiTags('Business')
 @ApiBearerAuth()
+@ApiExtraModels(CreateServiceDto, AddServicesDto) // 🔥 REQUIRED
 @UseGuards(JwtAuthGuard) // ✅ THIS FIXES req.user
 @Controller('business')
 export class BusinessController {
@@ -93,26 +96,31 @@ export class BusinessController {
       properties: {
         services: {
           type: 'array',
-          items: {
-            $ref: getSchemaPath(CreateServiceDto),
-          },
+          items: { $ref: getSchemaPath(CreateServiceDto) },
         },
       },
-      example: {
-        services: [
-          {
-            name: 'Full Car Service',
-            price: 2499,
-            durationMinutes: 120,
-            available: true,
-          },
-          {
-            name: 'Water Wash',
-            price: 399,
-            durationMinutes: 30,
-            available: true,
-          },
-        ],
+    },
+    examples: {
+      default: {
+        summary: 'Add multiple services',
+        value: {
+          services: [
+            {
+              name: 'Full Car Service',
+              pricingType: 'FIXED',
+              price: 2499,
+              durationMinutes: 120,
+              available: true,
+            },
+            {
+              name: 'Water Wash',
+              pricingType: 'FIXED',
+              price: 399,
+              durationMinutes: 30,
+              available: true,
+            },
+          ],
+        },
       },
     },
   })
@@ -132,7 +140,7 @@ export class BusinessController {
   addServices(
     @Req() req,
     @Param('id') businessId: string,
-    @Body() body: { services: CreateServiceDto[] },
+    @Body() body: AddServicesDto,
   ) {
     return this.businessService.addServices(
       req.user.id,
