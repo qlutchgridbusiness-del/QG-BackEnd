@@ -112,7 +112,7 @@ export class BookingService {
           owner: { id: ownerId },
         },
       },
-      relations: ['user', 'service', 'business'],
+      relations: ['user', 'service', 'business', 'business.owner'],
       order: { createdAt: 'DESC' },
     });
   }
