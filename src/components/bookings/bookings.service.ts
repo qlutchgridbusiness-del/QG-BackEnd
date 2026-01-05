@@ -1,5 +1,6 @@
 // src/components/bookings/bookings.service.ts
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -8,10 +9,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Booking } from './bookings.entity';
 import { Business } from '../business/business.entity';
-import { BusinessServiceEntity } from '../business-services/business-service.entity';
 import { CreateBookingDto } from './bookings.dto';
 import { BookingStatus } from './bookings.entity';
 import { BusinessStatus } from '../business/business-status.enum';
+import { Services } from '../services/services.entity';
 
 @Injectable()
 export class BookingService {
@@ -22,12 +23,16 @@ export class BookingService {
     @InjectRepository(Business)
     private readonly businessRepo: Repository<Business>,
 
-    @InjectRepository(BusinessServiceEntity)
-    private readonly serviceRepo: Repository<BusinessServiceEntity>,
+    @InjectRepository(Services)
+    private readonly serviceRepo: Repository<Services>,
   ) {}
 
   /* USER: create booking */
   async createBooking(userId: string, dto: CreateBookingDto) {
+    if (dto.scheduledAt && new Date(dto.scheduledAt) < new Date()) {
+      throw new BadRequestException('Cannot book past time');
+    }
+
     const business = await this.businessRepo.findOne({
       where: { id: dto.businessId },
     });
@@ -52,7 +57,12 @@ export class BookingService {
       business,
       service,
       scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : null,
-      priceSnapshot: service.price,
+      priceSnapshot:
+        service.pricingType === 'FIXED'
+          ? service.price
+          : service.pricingType === 'RANGE'
+            ? service.minPrice
+            : null,
       status: BookingStatus.REQUESTED,
     });
 
@@ -63,7 +73,7 @@ export class BookingService {
   getMyBookings(userId: string) {
     return this.bookingRepo.find({
       where: { user: { id: userId } },
-      relations: ['business', 'service'],
+      relations: ['user', 'business', 'service'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -72,7 +82,7 @@ export class BookingService {
   async getMyBookingById(userId: string, id: string) {
     const booking = await this.bookingRepo.findOne({
       where: { id },
-      relations: ['business', 'service'],
+      relations: ['user', 'business', 'service'],
     });
     if (!booking) throw new NotFoundException('Booking not found');
     if (booking.user.id !== userId) throw new ForbiddenException();
