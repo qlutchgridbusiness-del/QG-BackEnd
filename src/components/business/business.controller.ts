@@ -18,11 +18,14 @@ import {
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
   ApiNotFoundResponse,
+  ApiBody,
+  getSchemaPath,
 } from '@nestjs/swagger';
 import { BusinessService } from './business.service';
 import { CreateBusinessDto } from './business.dto';
 import { Business } from './business.entity';
 import { JwtAuthGuard } from '../auth/jwt.auth-guard';
+import { CreateServiceDto } from '../services/services.dto';
 
 @ApiTags('Business')
 @ApiBearerAuth()
@@ -74,5 +77,67 @@ export class BusinessController {
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   myBusinesses(@Req() req) {
     return this.businessService.getMyBusinesses(req.user.id);
+  }
+
+  @Post(':id/services')
+  @ApiOperation({ summary: 'Add services to a business (Owner only)' })
+  @ApiBearerAuth()
+  @ApiParam({
+    name: 'id',
+    description: 'Business ID',
+    example: 'b6f8c7a4-1234-4cde-9abc-1234567890ab',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        services: {
+          type: 'array',
+          items: {
+            $ref: getSchemaPath(CreateServiceDto),
+          },
+        },
+      },
+      example: {
+        services: [
+          {
+            name: 'Full Car Service',
+            price: 2499,
+            durationMinutes: 120,
+            available: true,
+          },
+          {
+            name: 'Water Wash',
+            price: 399,
+            durationMinutes: 30,
+            available: true,
+          },
+        ],
+      },
+    },
+  })
+  @ApiCreatedResponse({
+    description: 'Services added successfully',
+    schema: {
+      example: {
+        success: true,
+        totalServices: 3,
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiNotFoundResponse({
+    description: 'Business not found or not owned by user',
+  })
+  addServices(
+    @Req() req,
+    @Param('id') businessId: string,
+    @Body() body: { services: CreateServiceDto[] },
+  ) {
+    return this.businessService.addServices(
+      req.user.id,
+      businessId,
+      body.services,
+    );
   }
 }
