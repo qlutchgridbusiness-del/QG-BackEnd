@@ -9,7 +9,7 @@ import { Repository } from 'typeorm';
 
 import { CartItem } from './cart.entity';
 import { Booking, BookingStatus } from '../bookings/bookings.entity';
-import { BusinessServiceEntity } from '../business-services/business-service.entity';
+import { BusinessServiceEntity } from '../social/business-service.entity';
 import { User } from '../user/user.entity';
 import { BusinessStatus } from '../business/business-status.enum';
 

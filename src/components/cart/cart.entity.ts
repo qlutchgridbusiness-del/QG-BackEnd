@@ -5,7 +5,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from '../user/user.entity';
-import { BusinessServiceEntity } from '../business-services/business-service.entity';
+import { BusinessServiceEntity } from '../social/business-service.entity';
 
 @Entity('cart_items')
 export class CartItem {

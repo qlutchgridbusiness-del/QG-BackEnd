@@ -9,8 +9,8 @@ import {
 } from 'typeorm';
 import { User } from '../user/user.entity';
 import { BusinessStatus } from './business-status.enum';
-import { SocialPostEntity } from '../business-services/social-post.entity';
-import { BusinessServiceEntity } from '../business-services/business-service.entity';
+import { SocialPost } from '../social/social-post.entity';
+import { BusinessServiceEntity } from '../social/business-service.entity';
 import { Booking } from '../bookings/bookings.entity';
 
 @Entity('businesses')
@@ -68,8 +68,8 @@ export class Business {
   @OneToMany(() => BusinessServiceEntity, (s) => s.business)
   services: BusinessServiceEntity[];
 
-  @OneToMany(() => SocialPostEntity, (p) => p.business)
-  socialPosts: SocialPostEntity[];
+  @OneToMany(() => SocialPost, (p) => p.business)
+  socialPosts: SocialPost[];
 
   @OneToMany(() => Booking, (b) => b.business)
   bookings: Booking[];

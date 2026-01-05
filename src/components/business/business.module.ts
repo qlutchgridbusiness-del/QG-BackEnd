@@ -5,7 +5,7 @@ import { Business } from './business.entity';
 import { BusinessService } from './business.service';
 import { BusinessController } from './business.controller';
 import { User } from '../user/user.entity';
-import { SocialPostEntity } from '../business-services/social-post.entity';
+import { SocialPost } from '../social/social-post.entity';
 import { Services } from '../services/services.entity';
 import { BusinessBookingsController } from '../bookings/business-bookings.controller';
 import { BookingService } from '../bookings/bookings.service';
@@ -13,13 +13,7 @@ import { Booking } from '../bookings/bookings.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Business,
-      User,
-      Services,
-      SocialPostEntity,
-      Booking,
-    ]),
+    TypeOrmModule.forFeature([Business, User, Services, SocialPost, Booking]),
   ],
   providers: [BusinessService, BookingService],
   controllers: [BusinessController, BusinessBookingsController],
