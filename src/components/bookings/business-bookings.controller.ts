@@ -27,7 +27,7 @@ import { Booking } from './bookings.entity';
 @ApiTags('Business Bookings')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('business/bookings')
+@Controller('business-bookings')
 export class BusinessBookingsController {
   constructor(private readonly bookingService: BookingService) {}
 
