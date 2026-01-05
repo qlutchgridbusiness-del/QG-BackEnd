@@ -1,15 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BusinessServiceEntity } from '../business-services/business-service.entity';
+import { Services } from './services.entity';
 
 @Injectable()
 export class ServicesService {
   constructor(
-    @InjectRepository(BusinessServiceEntity)
-    private readonly serviceRepository: Repository<BusinessServiceEntity>,
+    @InjectRepository(Services)
+    private readonly serviceRepository: Repository<Services>,
   ) {}
 
+  /**
+   * Find services with optional filters
+   */
   async findFiltered(params: {
     search?: string;
     businessId?: string;
@@ -22,9 +25,10 @@ export class ServicesService {
     const qb = this.serviceRepository
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.business', 'b')
+      .where('b.status = :status', { status: 'ACTIVE' }) // only active businesses
       .orderBy('s.name', 'ASC');
 
-    // 🔍 Search
+    // 🔍 Search by service name
     if (search) {
       qb.andWhere('LOWER(s.name) LIKE LOWER(:search)', {
         search: `%${search}%`,
@@ -36,19 +40,24 @@ export class ServicesService {
       qb.andWhere('b.id = :businessId', { businessId });
     }
 
-    // 📍 Nearby filter
+    /**
+     * 📍 Nearby filter (NO earthdistance)
+     * Simple bounding box approximation (FAST + SAFE)
+     */
     if (lat && lng) {
+      const latDiff = radiusKm / 111; // ~111km per degree latitude
+      const lngDiff = radiusKm / (111 * Math.cos((lat * Math.PI) / 180));
+
       qb.andWhere(
         `
-      earth_distance(
-        ll_to_earth(:lat, :lng),
-        ll_to_earth(b.latitude, b.longitude)
-      ) <= :radius
-      `,
+        b.latitude BETWEEN :minLat AND :maxLat
+        AND b.longitude BETWEEN :minLng AND :maxLng
+        `,
         {
-          lat,
-          lng,
-          radius: radiusKm * 1000,
+          minLat: lat - latDiff,
+          maxLat: lat + latDiff,
+          minLng: lng - lngDiff,
+          maxLng: lng + lngDiff,
         },
       );
     }
@@ -56,10 +65,13 @@ export class ServicesService {
     return qb.getMany();
   }
 
-  async findOneById(id: string): Promise<BusinessServiceEntity | null> {
+  /**
+   * Get service by ID
+   */
+  async findOneById(id: string): Promise<Services | null> {
     return this.serviceRepository.findOne({
       where: { id },
-      relations: ['business'], // 👈 so frontend gets business info too
+      relations: ['business'],
     });
   }
 }
