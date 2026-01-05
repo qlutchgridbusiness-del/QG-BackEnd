@@ -1,6 +1,7 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { Injectable } from "@nestjs/common";
-import { v4 as uuid } from "uuid";
+// src/common/s3.service.ts
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class S3Service {
@@ -12,26 +13,21 @@ export class S3Service {
     },
   });
 
-  // Accept base64 instead of Multer file
-  async uploadBase64(
-    base64: string,
-    filename: string,
-    mimetype: string,
-    folder = "uploads"
-  ) {
-    const buffer = Buffer.from(base64, "base64");
-    const fileExt = filename.split(".").pop() || "";
-    const key = `${folder}/${uuid()}.${fileExt}`;
+  async upload(file: Express.Multer.File, folder = 'social') {
+    const key = `${folder}/${randomUUID()}-${file.originalname}`;
 
-    const uploadParams = {
-      Bucket: process.env.AWS_S3_BUCKET!,
-      Key: key,
-      Body: buffer,
-      ContentType: mimetype,
+    await this.s3.send(
+      new PutObjectCommand({
+        Bucket: process.env.AWS_S3_BUCKET!,
+        Key: key,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+      }),
+    );
+
+    return {
+      key,
+      url: `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`,
     };
-
-    await this.s3.send(new PutObjectCommand(uploadParams));
-
-    return `${process.env.AWS_S3_BASE_URL}/${key}`;
   }
 }

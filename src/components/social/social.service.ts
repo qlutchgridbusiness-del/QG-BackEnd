@@ -2,8 +2,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Business } from '../business/business.entity';
 import { SocialPost } from './social-post.entity';
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateSocialPostDto } from './social.dto';
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { S3Service } from '../aws/s3.service';
 
 // src/components/social/social.service.ts
 @Injectable()
@@ -13,6 +13,7 @@ export class SocialService {
     private readonly repo: Repository<SocialPost>,
     @InjectRepository(Business)
     private readonly businessRepo: Repository<Business>,
+    private readonly s3Service: S3Service,
   ) {}
 
   async getForOwner(ownerId: string) {
@@ -22,16 +23,21 @@ export class SocialService {
     });
   }
 
-  async create(ownerId: string, dto: CreateSocialPostDto) {
+  async upload(ownerId: string, file: Express.Multer.File, caption?: string) {
     const business = await this.businessRepo.findOne({
       where: { owner: { id: ownerId } },
     });
-    if (!business) throw new NotFoundException('Business not found');
+
+    if (!business) {
+      throw new ForbiddenException('No business found');
+    }
+
+    const { url } = await this.s3Service.upload(file, 'business-social');
 
     const post = this.repo.create({
+      imageUrl: url,
+      caption,
       business,
-      imageUrl: dto.imageUrl,
-      caption: dto.caption,
     });
 
     return this.repo.save(post);

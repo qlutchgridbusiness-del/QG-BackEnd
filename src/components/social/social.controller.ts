@@ -1,8 +1,23 @@
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt.auth-guard';
 import { SocialService } from './social.service';
-import { CreateSocialPostDto } from './social.dto';
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 // src/components/social/social.controller.ts
 @ApiTags('Business Social')
@@ -18,9 +33,24 @@ export class SocialController {
     return this.service.getForOwner(req.user.id);
   }
 
-  @Post()
-  @ApiOperation({ summary: 'Add social image' })
-  create(@Req() req, @Body() dto: CreateSocialPostDto) {
-    return this.service.create(req.user.id, dto);
+  @Post('upload')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        caption: { type: 'string' },
+      },
+    },
+  })
+  async upload(
+    @Req() req,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('caption') caption?: string,
+  ) {
+    return this.service.upload(req.user.id, file, caption);
   }
 }
