@@ -15,27 +15,32 @@ export class ServicesController {
 
   @Get()
   @ApiOperation({
-    summary: 'Get all services or filter by search and business',
+    summary: 'Get services (optional search, business, nearby)',
   })
-  @ApiQuery({
-    name: 'search',
-    required: false,
-    description: 'Search services by name (case-insensitive)',
-    example: 'gold',
-  })
-  @ApiQuery({
-    name: 'businessId',
-    required: false,
-    description: 'Filter services by business ID',
-    example: '123',
-  })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'businessId', required: false })
+  @ApiQuery({ name: 'lat', required: false, example: 12.9716 })
+  @ApiQuery({ name: 'lng', required: false, example: 77.5946 })
+  @ApiQuery({ name: 'radiusKm', required: false, example: 10 })
   @ApiResponse({
     status: 200,
-    description: 'List of matching services',
+    description: 'List of services',
     type: [Services],
   })
-  async getAllServices(@Query('search') search?: string) {
-    return this.servicesService.findFiltered(search);
+  async getAllServices(
+    @Query('search') search?: string,
+    @Query('businessId') businessId?: string,
+    @Query('lat') lat?: string,
+    @Query('lng') lng?: string,
+    @Query('radiusKm') radiusKm?: string,
+  ) {
+    return this.servicesService.findFiltered({
+      search,
+      businessId,
+      lat: lat ? Number(lat) : undefined,
+      lng: lng ? Number(lng) : undefined,
+      radiusKm: radiusKm ? Number(radiusKm) : 10,
+    });
   }
 
   @Get(':id')
