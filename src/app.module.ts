@@ -9,6 +9,7 @@ import { KycModule } from './components/kyc/kyc.module';
 import { ServiceModule } from './components/services/services.module';
 import { AdminModule } from './components/admin/admin.module';
 import { UserModule } from './components/user/user.module';
+import { SocialModule } from './components/social/social.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { UserModule } from './components/user/user.module';
     KycModule,
     ServiceModule,
     UserModule,
+    SocialModule,
   ],
 })
 export class AppModule {}
