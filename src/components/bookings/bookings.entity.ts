@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { User } from '../user/user.entity';
 import { Business } from '../business/business.entity';
-import { BusinessServiceEntity } from '../business-services/business-service.entity';
+import { Services } from '../services/services.entity';
 
 export enum BookingStatus {
   REQUESTED = 'REQUESTED', // user placed booking
@@ -29,8 +29,8 @@ export class Booking {
   @ManyToOne(() => Business)
   business: Business;
 
-  @ManyToOne(() => BusinessServiceEntity)
-  service: BusinessServiceEntity;
+  @ManyToOne(() => Services)
+  service: Services;
 
   @Column({ type: 'timestamp', nullable: true })
   scheduledAt: Date | null;
