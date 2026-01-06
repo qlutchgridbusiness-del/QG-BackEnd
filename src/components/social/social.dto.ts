@@ -11,5 +11,5 @@ export class CreateSocialPostDto {
   @ApiPropertyOptional({
     description: 'Uploaded image URL (S3 / Cloudinary)',
   })
-  imageUrl: string;
+  url: string;
 }
