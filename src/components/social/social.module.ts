@@ -6,9 +6,13 @@ import { SocialService } from './social.service';
 import { SocialController } from './social.controller';
 import { Business } from '../business/business.entity';
 import { S3Service } from '../aws/s3.service';
+import { SocialComment } from './social-comment.entity';
+import { SocialLike } from './social-like.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SocialPost, Business])],
+  imports: [
+    TypeOrmModule.forFeature([SocialPost, Business, SocialComment, SocialLike]),
+  ],
   controllers: [SocialController],
   providers: [SocialService, S3Service],
 })
