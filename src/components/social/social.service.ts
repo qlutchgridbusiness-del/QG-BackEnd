@@ -35,7 +35,7 @@ export class SocialService {
     const { url } = await this.s3Service.upload(file, 'business-social');
 
     const post = this.repo.create({
-      imageUrl: url,
+      url,
       caption,
       business,
     });

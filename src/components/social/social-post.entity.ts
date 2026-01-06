@@ -17,7 +17,7 @@ export class SocialPost {
   business: Business;
 
   @Column()
-  imageUrl: string;
+  url: string;
 
   @Column({ nullable: true })
   caption?: string;
