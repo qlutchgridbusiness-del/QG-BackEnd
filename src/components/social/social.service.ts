@@ -2,8 +2,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Business } from '../business/business.entity';
 import { SocialPost } from './social-post.entity';
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { S3Service } from '../aws/s3.service';
+import { SocialLike } from './social-like.entity';
+import { SocialComment } from './social-comment.entity';
 
 // src/components/social/social.service.ts
 @Injectable()
@@ -11,6 +17,10 @@ export class SocialService {
   constructor(
     @InjectRepository(SocialPost)
     private readonly repo: Repository<SocialPost>,
+    @InjectRepository(SocialLike)
+    private readonly likeRepo: Repository<SocialLike>,
+    @InjectRepository(SocialComment)
+    private readonly commentRepo: Repository<SocialComment>,
     @InjectRepository(Business)
     private readonly businessRepo: Repository<Business>,
     private readonly s3Service: S3Service,
@@ -50,5 +60,45 @@ export class SocialService {
       take: limit,
       relations: ['business'],
     });
+  }
+
+  async toggleLike(postId: string, userId: string) {
+    const post = await this.repo.findOne({ where: { id: postId } });
+    if (!post) throw new NotFoundException('Post not found');
+
+    const existing = await this.likeRepo.findOne({
+      where: {
+        post: { id: postId },
+        user: { id: userId },
+      },
+    });
+
+    if (existing) {
+      await this.likeRepo.remove(existing);
+      return { liked: false };
+    }
+
+    const like = this.likeRepo.create({
+      post: { id: postId } as any,
+      user: { id: userId } as any,
+    });
+
+    await this.likeRepo.save(like);
+    return { liked: true };
+  }
+
+  /* ---------------- ADD COMMENT ---------------- */
+
+  async addComment(postId: string, userId: string, comment: string) {
+    const post = await this.repo.findOne({ where: { id: postId } });
+    if (!post) throw new NotFoundException('Post not found');
+
+    const newComment = this.commentRepo.create({
+      comment,
+      post: { id: postId } as any,
+      user: { id: userId } as any,
+    });
+
+    return this.commentRepo.save(newComment);
   }
 }

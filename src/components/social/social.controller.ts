@@ -24,6 +24,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt.auth-guard';
 import { SocialService } from './social.service';
 import { SocialPost } from './social-post.entity';
+import { SocialComment } from './social-comment.entity';
 
 @ApiTags('Business Social')
 @Controller('social')
@@ -87,5 +88,55 @@ export class SocialController {
     @Query('limit') limit = 6,
   ) {
     return this.service.getForBusiness(businessId, +page, +limit);
+  }
+
+  @Post(':postId/like')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Like or unlike a social post' })
+  @ApiParam({
+    name: 'postId',
+    description: 'Social post ID',
+  })
+  @ApiOkResponse({
+    schema: {
+      example: { liked: true },
+    },
+  })
+  toggleLike(@Param('postId') postId: string, @Req() req) {
+    return this.service.toggleLike(postId, req.user.id);
+  }
+
+  /* -------------------------------------------
+     ADD COMMENT
+  -------------------------------------------- */
+
+  @Post(':postId/comment')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Add comment to a social post' })
+  @ApiParam({
+    name: 'postId',
+    description: 'Social post ID',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        comment: {
+          type: 'string',
+          example: 'Great service!',
+        },
+      },
+      required: ['comment'],
+    },
+  })
+  @ApiOkResponse({ type: SocialComment })
+  addComment(
+    @Param('postId') postId: string,
+    @Req() req,
+    @Body('comment') comment: string,
+  ) {
+    return this.service.addComment(postId, req.user.id, comment);
   }
 }
