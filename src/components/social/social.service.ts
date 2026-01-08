@@ -42,4 +42,13 @@ export class SocialService {
 
     return this.repo.save(post);
   }
+  async getForBusiness(businessId: string, page = 1, limit = 6) {
+    return this.repo.find({
+      where: { business: { id: businessId } },
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+      relations: ['business'],
+    });
+  }
 }
