@@ -23,7 +23,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 @ApiTags('Business Social')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('business-social')
+@Controller('social')
 export class SocialController {
   constructor(private readonly service: SocialService) {}
 
