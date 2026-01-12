@@ -68,7 +68,7 @@ export class Business {
   @OneToMany(() => BusinessServiceEntity, (s) => s.business)
   services: BusinessServiceEntity[];
 
-  @OneToMany(() => SocialPost, (p) => p.business)
+  @OneToMany(() => SocialPost, () => undefined)
   socialPosts: SocialPost[];
 
   @OneToMany(() => Booking, (b) => b.business)

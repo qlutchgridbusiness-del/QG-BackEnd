@@ -2,6 +2,7 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
+  Column,
   ManyToOne,
   CreateDateColumn,
   Unique,
@@ -10,17 +11,21 @@ import { User } from '../user/user.entity';
 import { SocialPost } from './social-post.entity';
 
 @Entity('social_likes')
-@Unique(['user', 'post'])
+@Unique(['userId', 'postId'])
 export class SocialLike {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column('uuid')
+  userId: string;
+
+  @Column('uuid')
+  postId: string;
+
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   user: User;
 
-  @ManyToOne(() => SocialPost, (p) => p.likes, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(() => SocialPost, { onDelete: 'CASCADE' })
   post: SocialPost;
 
   @CreateDateColumn()
