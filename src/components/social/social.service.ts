@@ -120,7 +120,7 @@ export class SocialService {
         }),
         comments: await this.commentRepo.find({
           where: { postId: p.id },
-          relations: ['user'],
+          order: { createdAt: 'ASC' },
         }),
       })),
     );
