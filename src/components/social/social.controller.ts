@@ -185,4 +185,47 @@ export class SocialController {
   ) {
     return this.service.addComment(postId, req.user.id, comment);
   }
+
+  // --------------------------------------------------
+  // 4️⃣ GLOBAL SOCIAL FEED (PUBLIC / USER)
+  // --------------------------------------------------
+  @Get('feed')
+  @ApiOperation({ summary: 'Get global social feed (all businesses)' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    example: 1,
+    description: 'Page number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    example: 10,
+    description: 'Items per page',
+  })
+  @ApiOkResponse({
+    schema: {
+      example: [
+        {
+          id: 'uuid',
+          url: 'https://s3.aws.com/image.jpg',
+          caption: 'Great service!',
+          businessId: 'uuid',
+          createdAt: '2026-01-12T10:00:00Z',
+          likesCount: 12,
+          comments: [
+            {
+              id: 'uuid',
+              comment: 'Awesome!',
+              userId: 'uuid',
+              createdAt: '2026-01-12T10:05:00Z',
+            },
+          ],
+        },
+      ],
+    },
+  })
+  getGlobalFeed(@Query('page') page = 1, @Query('limit') limit = 10) {
+    return this.service.getGlobalFeed(+page, +limit);
+  }
 }
