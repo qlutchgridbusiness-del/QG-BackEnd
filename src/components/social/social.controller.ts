@@ -2,11 +2,11 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
+  ApiOkResponse,
   ApiOperation,
-  ApiTags,
   ApiParam,
   ApiQuery,
-  ApiOkResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 import {
   Body,
@@ -37,8 +37,13 @@ export class SocialController {
   @Get('me')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Get social posts for my business (owner)' })
-  @ApiOkResponse({ type: [SocialPost] })
+  @ApiOperation({
+    summary: 'Get social posts for my business (owner)',
+  })
+  @ApiOkResponse({
+    description: 'List of social posts created by my business',
+    type: [SocialPost],
+  })
   getMySocial(@Req() req) {
     return this.service.getForOwner(req.user.id);
   }
@@ -51,15 +56,28 @@ export class SocialController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Upload a social post for my business' })
+  @ApiOperation({
+    summary: 'Upload a social post for my business',
+  })
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        file: { type: 'string', format: 'binary' },
-        caption: { type: 'string', example: 'Before & After service 🚗✨' },
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+        caption: {
+          type: 'string',
+          example: 'Before & After service 🚗✨',
+        },
       },
+      required: ['file'],
     },
+  })
+  @ApiOkResponse({
+    description: 'Uploaded social post',
+    type: SocialPost,
   })
   upload(
     @Req() req,
@@ -73,15 +91,28 @@ export class SocialController {
   // 3️⃣ PUBLIC: Get social posts for a business
   // --------------------------------------------------
   @Get('business/:businessId')
-  @ApiOperation({ summary: 'Get social posts for a business (public)' })
+  @ApiOperation({
+    summary: 'Get social posts for a business (public feed)',
+  })
   @ApiParam({
     name: 'businessId',
     description: 'Business ID',
     example: 'c034d02a-6170-4756-ad0c-707c09f85934',
   })
-  @ApiQuery({ name: 'page', required: false, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, example: 6 })
-  @ApiOkResponse({ type: [SocialPost] })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    example: 6,
+  })
+  @ApiOkResponse({
+    description: 'Paginated list of social posts',
+    type: [SocialPost],
+  })
   getBusinessSocial(
     @Param('businessId') businessId: string,
     @Query('page') page = 1,
@@ -90,34 +121,46 @@ export class SocialController {
     return this.service.getForBusiness(businessId, +page, +limit);
   }
 
+  // --------------------------------------------------
+  // 4️⃣ LIKE / UNLIKE POST
+  // --------------------------------------------------
   @Post(':postId/like')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Like or unlike a social post' })
+  @ApiOperation({
+    summary: 'Like or unlike a social post',
+  })
   @ApiParam({
     name: 'postId',
     description: 'Social post ID',
+    example: '6b2ce1f2-ea62-4e0b-8913-a52b866a2c54',
   })
   @ApiOkResponse({
+    description: 'Like toggle result',
     schema: {
-      example: { liked: true },
+      example: {
+        liked: true,
+        likesCount: 12,
+      },
     },
   })
-  toggleLike(@Req() req, @Param('id') postId: string) {
+  toggleLike(@Param('postId') postId: string, @Req() req) {
     return this.service.toggleLike(postId, req.user.id);
   }
 
-  /* -------------------------------------------
-     ADD COMMENT
-  -------------------------------------------- */
-
+  // --------------------------------------------------
+  // 5️⃣ ADD COMMENT
+  // --------------------------------------------------
   @Post(':postId/comment')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Add comment to a social post' })
+  @ApiOperation({
+    summary: 'Add a comment to a social post',
+  })
   @ApiParam({
     name: 'postId',
     description: 'Social post ID',
+    example: '6b2ce1f2-ea62-4e0b-8913-a52b866a2c54',
   })
   @ApiBody({
     schema: {
@@ -131,7 +174,10 @@ export class SocialController {
       required: ['comment'],
     },
   })
-  @ApiOkResponse({ type: SocialComment })
+  @ApiOkResponse({
+    description: 'Created comment',
+    type: SocialComment,
+  })
   addComment(
     @Param('postId') postId: string,
     @Req() req,

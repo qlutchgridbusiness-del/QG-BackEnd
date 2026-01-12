@@ -1,14 +1,11 @@
+// src/components/social/social-comment.entity.ts
 import {
+  Entity,
+  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  Entity,
-  ManyToOne,
-  PrimaryGeneratedColumn,
 } from 'typeorm';
-import { SocialPost } from './social-post.entity';
-import { User } from '../user/user.entity';
 
-// src/components/social/social-comment.entity.ts
 @Entity('social_comments')
 export class SocialComment {
   @PrimaryGeneratedColumn('uuid')
@@ -18,13 +15,10 @@ export class SocialComment {
   comment: string;
 
   @Column('uuid')
+  userId: string;
+
+  @Column('uuid')
   postId: string;
-
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  user: User;
-
-  @ManyToOne(() => SocialPost, { onDelete: 'CASCADE' })
-  post: SocialPost;
 
   @CreateDateColumn()
   createdAt: Date;
