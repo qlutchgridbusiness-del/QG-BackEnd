@@ -185,4 +185,12 @@ export class SocialController {
   ) {
     return this.service.addComment(postId, req.user.id, comment);
   }
+
+  @Get('feed')
+  @ApiOperation({ summary: 'Global social feed' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  getGlobalFeed(@Query('page') page = 1, @Query('limit') limit = 10) {
+    return this.service.getGlobalFeed(+page, +limit);
+  }
 }

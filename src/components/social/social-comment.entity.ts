@@ -15,7 +15,7 @@ export class SocialComment {
   comment: string;
 
   @Column('uuid')
-  userId: string;
+  user: string;
 
   @Column('uuid')
   postId: string;

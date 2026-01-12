@@ -102,4 +102,27 @@ export class SocialService {
       comment,
     });
   }
+
+  async getGlobalFeed(page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+
+    const posts = await this.repo.find({
+      order: { createdAt: 'DESC' },
+      skip,
+      take: limit,
+    });
+
+    return Promise.all(
+      posts.map(async (p) => ({
+        ...p,
+        likesCount: await this.likeRepo.count({
+          where: { postId: p.id },
+        }),
+        comments: await this.commentRepo.find({
+          where: { postId: p.id },
+          relations: ['user'],
+        }),
+      })),
+    );
+  }
 }
