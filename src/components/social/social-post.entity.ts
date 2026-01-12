@@ -4,7 +4,9 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  ManyToOne,
 } from 'typeorm';
+import { Business } from '../business/business.entity';
 
 @Entity('social_posts')
 export class SocialPost {
@@ -19,6 +21,9 @@ export class SocialPost {
 
   @Column('uuid')
   businessId: string;
+
+  @ManyToOne(() => Business, { onDelete: 'CASCADE' })
+  business: Business;
 
   @CreateDateColumn()
   createdAt: Date;

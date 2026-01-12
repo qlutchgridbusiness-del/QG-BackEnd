@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { S3Service } from '../aws/s3.service';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { SocialComment } from './social-comment.entity';
 import { SocialLike } from './social-like.entity';
 import { SocialPost } from './social-post.entity';
@@ -27,14 +27,14 @@ export class SocialService {
   ) {}
 
   // ---------------- OWNER FEED ----------------
-  async getForOwner(ownerId: string, page = 1, limit = 6) {
-    const business = await this.businessRepo.findOne({
-      where: { owner: { id: ownerId } },
+  async getForOwner(userId: string) {
+    const businesses = await this.businessRepo.find({
+      where: { owner: { id: userId } },
     });
 
-    if (!business) throw new ForbiddenException('No business found');
+    const ids = businesses.map((b) => b.id);
 
-    return this.getForBusiness(business.id, page, limit);
+    return this.getForBusinesses(ids);
   }
 
   // ---------------- UPLOAD ----------------
@@ -54,14 +54,12 @@ export class SocialService {
     });
   }
 
-  // ---------------- PUBLIC FEED ----------------
-  async getForBusiness(businessId: string, page = 1, limit = 6) {
-    const skip = (page - 1) * limit;
-
+  async getForBusinesses(businessIds: string[], page = 1, limit = 10) {
     const posts = await this.repo.find({
-      where: { businessId },
+      where: { businessId: In(businessIds) },
+      relations: ['business'],
       order: { createdAt: 'DESC' },
-      skip,
+      skip: (page - 1) * limit,
       take: limit,
     });
 
@@ -69,9 +67,28 @@ export class SocialService {
       posts.map(async (p) => ({
         ...p,
         likesCount: await this.likeRepo.count({ where: { postId: p.id } }),
+        comments: await this.commentRepo.find({ where: { postId: p.id } }),
+      })),
+    );
+  }
+
+  async getForBusinessId(businessId: string, page = 1, limit = 10) {
+    const posts = await this.repo.find({
+      where: { businessId },
+      relations: ['business'],
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return Promise.all(
+      posts.map(async (p) => ({
+        ...p,
+        likesCount: await this.likeRepo.count({
+          where: { postId: p.id },
+        }),
         comments: await this.commentRepo.find({
           where: { postId: p.id },
-          order: { createdAt: 'ASC' },
         }),
       })),
     );
@@ -108,6 +125,7 @@ export class SocialService {
 
     const posts = await this.repo.find({
       order: { createdAt: 'DESC' },
+      relations: ['business'],
       skip,
       take: limit,
     });
@@ -115,7 +133,10 @@ export class SocialService {
     return Promise.all(
       posts.map(async (p) => ({
         ...p,
-        business: p.businessId,
+        business: {
+          id: p.business.id,
+          name: p.business.name,
+        },
         likesCount: await this.likeRepo.count({
           where: { postId: p.id },
         }),

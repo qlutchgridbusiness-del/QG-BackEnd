@@ -118,7 +118,7 @@ export class SocialController {
     @Query('page') page = 1,
     @Query('limit') limit = 6,
   ) {
-    return this.service.getForBusiness(businessId, +page, +limit);
+    return this.service.getForBusinessId(businessId, +page, +limit);
   }
 
   // --------------------------------------------------
@@ -184,13 +184,5 @@ export class SocialController {
     @Body('comment') comment: string,
   ) {
     return this.service.addComment(postId, req.user.id, comment);
-  }
-
-  @Get('feed')
-  @ApiOperation({ summary: 'Global social feed' })
-  @ApiQuery({ name: 'page', required: false })
-  @ApiQuery({ name: 'limit', required: false })
-  getGlobalFeed(@Query('page') page = 1, @Query('limit') limit = 10) {
-    return this.service.getGlobalFeed(+page, +limit);
   }
 }
