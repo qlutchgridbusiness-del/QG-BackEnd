@@ -103,7 +103,7 @@ export class SocialController {
       example: { liked: true },
     },
   })
-  toggleLike(@Param('postId') postId: string, @Req() req) {
+  toggleLike(@Req() req, @Param('id') postId: string) {
     return this.service.toggleLike(postId, req.user.id);
   }
 

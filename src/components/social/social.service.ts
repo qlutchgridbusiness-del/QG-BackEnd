@@ -69,9 +69,6 @@ export class SocialService {
   }
 
   async toggleLike(postId: string, userId: string) {
-    const post = await this.repo.findOne({ where: { id: postId } });
-    if (!post) throw new NotFoundException('Post not found');
-
     const existing = await this.likeRepo.findOne({
       where: {
         post: { id: postId },
@@ -81,16 +78,26 @@ export class SocialService {
 
     if (existing) {
       await this.likeRepo.remove(existing);
-      return { liked: false };
+
+      const count = await this.likeRepo.count({
+        where: { post: { id: postId } },
+      });
+
+      return { liked: false, likesCount: count };
     }
 
-    const like = this.likeRepo.create({
-      post: { id: postId } as any,
-      user: { id: userId } as any,
+    await this.likeRepo.save(
+      this.likeRepo.create({
+        post: { id: postId } as any,
+        user: { id: userId } as any,
+      }),
+    );
+
+    const count = await this.likeRepo.count({
+      where: { post: { id: postId } },
     });
 
-    await this.likeRepo.save(like);
-    return { liked: true };
+    return { liked: true, likesCount: count };
   }
 
   /* ---------------- ADD COMMENT ---------------- */
