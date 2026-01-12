@@ -115,6 +115,7 @@ export class SocialService {
     return Promise.all(
       posts.map(async (p) => ({
         ...p,
+        business: p.businessId,
         likesCount: await this.likeRepo.count({
           where: { postId: p.id },
         }),
