@@ -29,6 +29,12 @@ export class SocialService {
   async getForOwner(ownerId: string) {
     return this.repo.find({
       where: { business: { owner: { id: ownerId } } },
+      relations: {
+        likes: true,
+        comments: {
+          user: true,
+        },
+      },
       order: { createdAt: 'DESC' },
     });
   }
