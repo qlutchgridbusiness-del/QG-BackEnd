@@ -22,10 +22,18 @@ export class SocialComment {
   @Column('uuid')
   postId: string;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({
+    name: 'parent_comment_id',
+    type: 'uuid',
+    nullable: true,
+  })
   parentCommentId?: string;
 
-  @Column({ default: false })
+  @Column({
+    name: 'is_business_reply',
+    type: 'boolean',
+    default: false,
+  })
   isBusinessReply: boolean;
 
   @CreateDateColumn()
