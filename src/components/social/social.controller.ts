@@ -19,6 +19,7 @@ import {
   UseInterceptors,
   Param,
   Query,
+  Delete,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt.auth-guard';
@@ -227,5 +228,43 @@ export class SocialController {
   })
   getGlobalFeed(@Query('page') page = 1, @Query('limit') limit = 10) {
     return this.service.getGlobalFeed(+page, +limit);
+  }
+
+  @Post('comment/:commentId/reply')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Business reply to a comment' })
+  @ApiParam({ name: 'commentId' })
+  @ApiBody({
+    schema: {
+      properties: {
+        comment: { type: 'string', example: 'Thanks for your feedback!' },
+      },
+    },
+  })
+  replyToComment(
+    @Param('commentId') commentId: string,
+    @Req() req,
+    @Body('comment') comment: string,
+  ) {
+    return this.service.replyToComment(commentId, req.user.id, comment);
+  }
+
+  // ---------------- DELETE COMMENT ----------------
+  @Delete('comment/:commentId')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Delete a comment (user or business)' })
+  deleteComment(@Param('commentId') commentId: string, @Req() req) {
+    return this.service.deleteComment(commentId, req.user.id);
+  }
+
+  // ---------------- DELETE POST ----------------
+  @Delete(':postId')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Delete social post (business owner)' })
+  deletePost(@Param('postId') postId: string, @Req() req) {
+    return this.service.deletePost(postId, req.user.id);
   }
 }

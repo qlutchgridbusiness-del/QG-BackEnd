@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { S3Service } from '../aws/s3.service';
 import { In, Repository } from 'typeorm';
 import { SocialComment } from './social-comment.entity';
@@ -146,5 +150,106 @@ export class SocialService {
         }),
       })),
     );
+  }
+  async replyToComment(commentId: string, ownerId: string, reply: string) {
+    const parent = await this.commentRepo.findOne({
+      where: { id: commentId },
+    });
+
+    if (!parent) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    // find post
+    const post = await this.repo.findOne({
+      where: { id: parent.postId },
+    });
+
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+
+    // ownership check
+    const business = await this.businessRepo.findOne({
+      where: {
+        id: post.businessId,
+        owner: { id: ownerId },
+      },
+    });
+
+    if (!business) {
+      throw new ForbiddenException('Not your business');
+    }
+
+    return this.commentRepo.save({
+      comment: reply,
+      postId: parent.postId,
+      userId: ownerId,
+      parentCommentId: parent.id,
+      isBusinessReply: true,
+    });
+  }
+
+  async deleteComment(commentId: string, userId: string) {
+    const comment = await this.commentRepo.findOne({
+      where: { id: commentId },
+    });
+
+    if (!comment) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    // allow comment owner
+    if (comment.userId === userId) {
+      await this.commentRepo.delete(comment.id);
+      return { deleted: true };
+    }
+
+    // allow business owner
+    const post = await this.repo.findOne({
+      where: { id: comment.postId },
+    });
+
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+
+    const business = await this.businessRepo.findOne({
+      where: {
+        id: post.businessId,
+        owner: { id: userId },
+      },
+    });
+
+    if (!business) {
+      throw new ForbiddenException('Not allowed');
+    }
+
+    await this.commentRepo.delete(comment.id);
+    return { deleted: true };
+  }
+
+  async deletePost(postId: string, ownerId: string) {
+    const post = await this.repo.findOne({
+      where: { id: postId },
+    });
+
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+
+    const business = await this.businessRepo.findOne({
+      where: {
+        id: post.businessId,
+        owner: { id: ownerId },
+      },
+    });
+
+    if (!business) {
+      throw new ForbiddenException('Not your post');
+    }
+
+    await this.repo.delete(post.id);
+    return { deleted: true };
   }
 }
