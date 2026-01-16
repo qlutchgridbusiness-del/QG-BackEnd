@@ -23,6 +23,7 @@ export class AuthService {
 
   // 🔹 SEND OTP
   async requestOtp(phone: string) {
+    console.log('check number', phone);
     return this.otpService.sendOtp(phone);
   }
 

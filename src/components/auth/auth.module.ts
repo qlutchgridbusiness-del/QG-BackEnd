@@ -6,7 +6,6 @@ import { AuthController } from './auth.controller';
 import { Otp } from 'src/entities/otp.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { FirebaseService } from '../firebase/firebase.service';
 import { VerificationService } from '../verification/verification.service';
 import { Business } from '../business/business.entity';
 import { PassportModule } from '@nestjs/passport';
@@ -29,7 +28,7 @@ import { OtpModule } from './otp.module';
     OtpModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, FirebaseService, VerificationService, JwtStrategy],
+  providers: [AuthService, VerificationService, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}
