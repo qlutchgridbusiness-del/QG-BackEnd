@@ -1,4 +1,3 @@
-// src/components/payments/payments.service.ts
 import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
 import Razorpay from 'razorpay';
@@ -14,23 +13,30 @@ export class PaymentsService {
     });
   }
 
-  /** amount in paise */
+  /**
+   * amountPaise: ₹10 = 1000
+   */
   async createOrder(amountPaise: number, receipt: string, currency = 'INR') {
-    const order = await this.instance.orders.create({
+    return this.instance.orders.create({
       amount: amountPaise,
       currency,
-      receipt,
+      receipt: `qg_${receipt}`,
+      payment_capture: true, // auto-capture
     });
-    return order; // { id, amount, currency, status, ... }
   }
 
-  /** Verify payment signature sent by client after success */
-  verifySignature(orderId: string, paymentId: string, signature: string) {
+  verifySignature(
+    orderId: string,
+    paymentId: string,
+    signature: string,
+  ): boolean {
     const body = `${orderId}|${paymentId}`;
+
     const expected = crypto
       .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
       .update(body)
       .digest('hex');
+
     return expected === signature;
   }
 }
