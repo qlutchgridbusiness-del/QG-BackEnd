@@ -17,9 +17,10 @@ export class PaymentsController {
     if (!body.amount) {
       throw new BadRequestException('Invalid amount');
     }
+    const amountPaise = body.amount * 100;
 
     const order = await this.paymentsService.createOrder(
-      body.amount,
+      amountPaise,
       body.receipt,
     );
 
