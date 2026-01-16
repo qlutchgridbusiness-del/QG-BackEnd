@@ -14,7 +14,7 @@ export class PaymentsController {
       receipt: string;
     },
   ) {
-    if (!body.amount || body.amount < 100) {
+    if (!body.amount) {
       throw new BadRequestException('Invalid amount');
     }
 
