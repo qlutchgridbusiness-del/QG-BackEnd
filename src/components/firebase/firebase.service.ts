@@ -12,7 +12,10 @@ export class FirebaseService {
           privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
         }),
       });
-        console.log('✅ Firebase initialized successfully for project:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+      console.log(
+        '✅ Firebase initialized successfully for project:',
+        process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      );
     }
   }
 
@@ -22,7 +25,9 @@ export class FirebaseService {
       return decodedToken;
     } catch (error) {
       console.error('Error verifying ID token:', error);
-      throw new InternalServerErrorException('Invalid or expired Firebase token');
+      throw new InternalServerErrorException(
+        'Invalid or expired Firebase token',
+      );
     }
   }
 

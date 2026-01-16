@@ -6,11 +6,8 @@ export class SendOtpDto {
 }
 
 export class VerifyOtpDto {
-  @ApiProperty()
   phone: string;
-
-  @ApiProperty()
-  idToken: string;
+  otp: string;
 }
 
 export class RegisterDto {
@@ -18,6 +15,7 @@ export class RegisterDto {
   phone: string;
   name: string;
   email?: string;
+  otp: string;
   role: 'user' | 'business';
   aadhaarCard?: string;
   pancard?: string;
@@ -29,7 +27,4 @@ export class RegisterDto {
 export class LoginDto {
   @ApiProperty()
   phone: string;
-
-  @ApiProperty()
-  idToken: string;
 }

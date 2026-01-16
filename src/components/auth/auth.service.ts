@@ -1,82 +1,73 @@
-// auth.service.ts
+// src/components/auth/auth.service.ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User, UserRole } from '../user/user.entity';
 import { Business } from '../business/business.entity';
-import { FirebaseService } from '../firebase/firebase.service';
 import { RegisterDto } from './auth.dto';
-import { VerificationService } from '../verification/verification.service';
+import { OtpService } from './otp.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly firebaseService: FirebaseService,
-    private readonly verificationService: VerificationService,
+    private readonly otpService: OtpService,
+
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+
     @InjectRepository(Business)
     private readonly businessRepo: Repository<Business>,
   ) {}
 
-  async verifyOtp(phone: string, idToken: string) {
-    const decoded = await this.firebaseService.verifyIdToken(idToken);
-    if (decoded.phone_number !== phone) {
-      throw new UnauthorizedException('Phone number mismatch');
+  // 🔹 SEND OTP
+  async requestOtp(phone: string) {
+    return this.otpService.sendOtp(phone);
+  }
+
+  // 🔹 VERIFY OTP
+  async verifyOtp(phone: string, otp: string) {
+    const valid = await this.otpService.verifyOtp(phone, otp);
+    if (!valid) {
+      throw new UnauthorizedException('Invalid or expired OTP');
     }
     return { message: 'OTP verified successfully' };
   }
 
+  // 🔹 REGISTER
   async register(dto: RegisterDto) {
-    const decoded = await this.firebaseService.verifyIdToken(dto.idToken);
-    if (decoded.phone_number !== dto.phone) {
-      throw new UnauthorizedException('Phone number mismatch');
+    // OTP MUST be verified before this
+    const otpValid = await this.otpService.verifyOtp(dto.phone, dto.otp);
+    if (!otpValid) {
+      throw new UnauthorizedException('OTP verification required');
     }
 
-    // --- Aadhaar & PAN verification (temporarily skipped) ---
-    // if (dto.role === 'business' && dto.aadhaarCard) {
-    //   console.log('inside Aadhaar');
-    //   const aadhaarValid = await this.verificationService.verifyAadhaar(
-    //     dto.aadhaarCard,
-    //     dto.idToken,
-    //   );
-    //   console.log('aadhaarValid', aadhaarValid);
-    //   if (!aadhaarValid) throw new BadRequestException('Invalid Aadhaar');
-    // }
-
-    // if (dto.role === 'business' && dto.pancard) {
-    //   const panValid = await this.verificationService.verifyPAN(dto.pancard);
-    //   if (!panValid) throw new BadRequestException('Invalid PAN');
-    // }
-
-    // --- Create or get user ---
-    let user = await this.userRepo.findOne({ where: { phone: dto.phone } });
+    let user = await this.userRepo.findOne({
+      where: { phone: dto.phone },
+    });
 
     if (!user) {
-      const userData: Partial<User> = {
+      user = this.userRepo.create({
         phone: dto.phone,
         name: dto.name,
         email: dto.email,
         role: dto.role === 'business' ? UserRole.BUSINESS : UserRole.USER,
-      };
-
-      user = this.userRepo.create(userData);
+      });
       await this.userRepo.save(user);
     }
 
-    // --- Create business if role is 'business' ---
+    // 🔹 Create Business if needed
     if (dto.role === 'business') {
-      const existingBusiness = await this.businessRepo.findOne({
+      const existing = await this.businessRepo.findOne({
         where: { owner: { id: user.id } },
       });
 
-      if (!existingBusiness) {
+      if (!existing) {
         const business = this.businessRepo.create({
-          name: dto.name,
-          email: dto.email,
+          name: dto.name || dto.name,
           phone: dto.phone,
+          email: dto.email,
           owner: user,
           latitude: dto.latitude || null,
           longitude: dto.longitude || null,
@@ -85,40 +76,21 @@ export class AuthService {
       }
     }
 
-    // --- Generate JWT ---
-    const token = this.jwtService.sign({
-      sub: user.id,
-      phone: user.phone,
-      role: user.role,
-      email: user.email,
-    });
-
-    return {
-      message:
-        dto.role === 'business'
-          ? 'Business registered successfully'
-          : 'User registered successfully',
-      token,
-      role: user.role,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-      },
-    };
+    return this.issueToken(user);
   }
 
-  async login(phone: string, idToken: string) {
-    const decoded = await this.firebaseService.verifyIdToken(idToken);
-    if (decoded.phone_number !== phone) {
-      throw new UnauthorizedException('Phone number mismatch');
+  // 🔹 LOGIN
+  async login(phone: string) {
+    const user = await this.userRepo.findOne({ where: { phone } });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
     }
 
-    const user = await this.userRepo.findOne({ where: { phone } });
-    if (!user) throw new UnauthorizedException('User not found');
+    return this.issueToken(user);
+  }
 
+  // 🔹 JWT ISSUER
+  private issueToken(user: User) {
     const token = this.jwtService.sign({
       sub: user.id,
       phone: user.phone,
@@ -127,8 +99,9 @@ export class AuthService {
     });
 
     return {
-      message: 'Login successful',
+      message: 'Authentication successful',
       token,
+      role: user.role,
       user: {
         id: user.id,
         name: user.name,
