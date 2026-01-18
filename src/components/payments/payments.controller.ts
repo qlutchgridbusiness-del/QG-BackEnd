@@ -1,38 +1,57 @@
-import { Body, Controller, Post, BadRequestException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  BadRequestException,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { PaymentsService } from './payments.service';
+import { BookingService } from '../bookings/bookings.service';
+import { JwtAuthGuard } from '../auth/jwt.auth-guard';
+import { BookingStatus } from '../bookings/bookings.entity';
 
 @Controller('payments')
+@UseGuards(JwtAuthGuard)
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(
+    private readonly paymentsService: PaymentsService,
+    private readonly bookingService: BookingService,
+  ) {}
 
-  // STEP 1: Create order
+  // STEP 1️⃣ Create Razorpay order (USER)
   @Post('create-order')
   async createOrder(
+    @Req() req,
     @Body()
     body: {
-      amount: number; // in paise
-      receipt: string;
+      bookingId: string;
     },
   ) {
-    if (!body.amount) {
-      throw new BadRequestException('Invalid amount');
-    }
-    const amountPaise = body.amount * 100;
+    const booking = await this.bookingService.getMyBookingById(
+      req.user.id,
+      body.bookingId,
+    );
 
+    if (booking.status !== BookingStatus.SERVICE_COMPLETED) {
+      throw new BadRequestException('Service not completed yet');
+    }
+
+    booking.status = BookingStatus.PAYMENT_PENDING;
     const order = await this.paymentsService.createOrder(
-      amountPaise,
-      body.receipt,
+      booking.totalAmount * 100,
+      booking.id,
     );
 
     return {
       orderId: order.id,
       amount: order.amount,
       currency: order.currency,
-      key: process.env.RAZORPAY_KEY_ID, // safe to expose
+      key: process.env.RAZORPAY_KEY_ID,
     };
   }
 
-  // STEP 2: Verify payment
+  // STEP 2️⃣ Verify payment
   @Post('verify')
   async verifyPayment(
     @Body()
@@ -40,6 +59,7 @@ export class PaymentsController {
       razorpay_order_id: string;
       razorpay_payment_id: string;
       razorpay_signature: string;
+      bookingId: string;
     },
   ) {
     const isValid = this.paymentsService.verifySignature(
@@ -52,7 +72,10 @@ export class PaymentsController {
       throw new BadRequestException('Payment verification failed');
     }
 
-    // 🔒 PRODUCTION: Save payment + activate plan here
+    await this.bookingService.markPaymentCompleted(
+      body.bookingId,
+      body.razorpay_order_id,
+    );
 
     return {
       success: true,

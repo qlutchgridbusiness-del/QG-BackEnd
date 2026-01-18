@@ -9,6 +9,7 @@ import { Business } from '../business/business.entity';
 import { Services } from '../services/services.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateBookingDto } from './bookings.dto';
+import { WhatsappService } from '../notifications/whatsapp.service';
 
 @Injectable()
 export class BookingService {
@@ -21,6 +22,8 @@ export class BookingService {
 
     @InjectRepository(Services)
     private readonly serviceRepo: Repository<Services>,
+
+    private readonly whatsappService: WhatsappService,
   ) {}
 
   // ================= USER =================
@@ -119,7 +122,10 @@ export class BookingService {
     booking.beforeServiceImages = beforeImages;
     booking.status = BookingStatus.SERVICE_STARTED;
 
-    return this.bookingRepo.save(booking);
+    await this.bookingRepo.save(booking);
+    await this.whatsappService.notifyUser(booking, 'SERVICE_STARTED');
+
+    return booking;
   }
 
   async completeService(
@@ -137,7 +143,10 @@ export class BookingService {
     booking.totalAmount = amount;
     booking.status = BookingStatus.PAYMENT_PENDING;
 
-    return this.bookingRepo.save(booking);
+    await this.bookingRepo.save(booking);
+    await this.whatsappService.notifyUser(booking, 'SERVICE_COMPLETED');
+
+    return booking;
   }
 
   async markPaymentCompleted(bookingId: string, razorpayPaymentId: string) {
@@ -159,7 +168,8 @@ export class BookingService {
       throw new ForbiddenException();
 
     booking.status = BookingStatus.VEHICLE_DELIVERED;
-    return this.bookingRepo.save(booking);
+    await this.bookingRepo.save(booking);
+    await this.whatsappService.notifyUser(booking, 'VEHICLE_DELIVERED');
   }
 
   // ================= INTERNAL =================

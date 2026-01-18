@@ -8,6 +8,7 @@ import { PaymentsService } from '../payments/payments.service';
 import { ServicesService } from '../services/services.service';
 import { Services } from '../services/services.entity';
 import { Business } from '../business/business.entity';
+import { WhatsappService } from '../notifications/whatsapp.service';
 
 @Module({
   imports: [
@@ -18,7 +19,12 @@ import { Business } from '../business/business.entity';
       Business,
     ]),
   ],
-  providers: [BookingService, PaymentsService, ServicesService],
+  providers: [
+    BookingService,
+    PaymentsService,
+    ServicesService,
+    WhatsappService,
+  ],
   controllers: [BookingController],
   exports: [BookingService],
 })

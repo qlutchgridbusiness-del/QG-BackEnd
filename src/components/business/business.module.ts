@@ -10,12 +10,13 @@ import { Services } from '../services/services.entity';
 import { BusinessBookingsController } from '../bookings/business-bookings.controller';
 import { BookingService } from '../bookings/bookings.service';
 import { Booking } from '../bookings/bookings.entity';
+import { WhatsappService } from '../notifications/whatsapp.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Business, User, Services, SocialPost, Booking]),
   ],
-  providers: [BusinessService, BookingService],
+  providers: [BusinessService, BookingService, WhatsappService],
   controllers: [BusinessController, BusinessBookingsController],
   exports: [TypeOrmModule],
 })
