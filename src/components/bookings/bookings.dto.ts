@@ -15,4 +15,7 @@ export class CreateBookingDto {
   @IsOptional()
   @IsDateString()
   scheduledAt?: string;
+
+  @ApiProperty()
+  amount: number;
 }

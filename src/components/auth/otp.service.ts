@@ -17,7 +17,7 @@ export class OtpService {
       template_id: process.env.MSG91_TEMPLATE_ID,
       sender: process.env.MSG91_SENDER_ID,
       short_url: 0,
-      mobiles: phone.replace('+', ''),
+      mobiles: `91${phone}`,
       variables: {
         OTP: otp,
       },

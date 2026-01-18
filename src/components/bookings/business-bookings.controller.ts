@@ -113,6 +113,34 @@ export class BusinessBookingsController {
   })
   @ApiForbiddenResponse({ description: 'Invalid status transition' })
   completeBooking(@Req() req, @Param('id') id: string) {
-    return this.bookingService.completeBooking(req.user.id, id);
+    return this.bookingService.markPaymentCompleted(req.user.id, id);
+  }
+
+  @Put(':id/start-service')
+  start(
+    @Req() req,
+    @Param('id') id: string,
+    @Body('beforeImages') beforeImages: string[],
+  ) {
+    return this.bookingService.startService(req.user.id, id, beforeImages);
+  }
+
+  @Put(':id/complete-service')
+  complete(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() body: { afterImages: string[]; amount: number },
+  ) {
+    return this.bookingService.completeService(
+      req.user.id,
+      id,
+      body.afterImages,
+      body.amount,
+    );
+  }
+
+  @Put(':id/deliver')
+  deliver(@Req() req, @Param('id') id: string) {
+    return this.bookingService.deliverVehicle(req.user.id, id);
   }
 }

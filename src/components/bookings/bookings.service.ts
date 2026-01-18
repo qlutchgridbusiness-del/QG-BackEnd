@@ -1,18 +1,14 @@
-// src/components/bookings/bookings.service.ts
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Booking } from './bookings.entity';
+import { Booking, BookingStatus } from './bookings.entity';
 import { Business } from '../business/business.entity';
-import { CreateBookingDto } from './bookings.dto';
-import { BookingStatus } from './bookings.entity';
-import { BusinessStatus } from '../business/business-status.enum';
 import { Services } from '../services/services.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { CreateBookingDto } from './bookings.dto';
 
 @Injectable()
 export class BookingService {
@@ -27,20 +23,13 @@ export class BookingService {
     private readonly serviceRepo: Repository<Services>,
   ) {}
 
-  /* USER: create booking */
-  async createBooking(userId: string, dto: CreateBookingDto) {
-    if (dto.scheduledAt && new Date(dto.scheduledAt) < new Date()) {
-      throw new BadRequestException('Cannot book past time');
-    }
+  // ================= USER =================
 
+  async createBooking(userId: string, dto: CreateBookingDto) {
     const business = await this.businessRepo.findOne({
       where: { id: dto.businessId },
     });
     if (!business) throw new NotFoundException('Business not found');
-
-    if (business.status !== BusinessStatus.ACTIVE) {
-      throw new ForbiddenException('Business not active');
-    }
 
     const service = await this.serviceRepo.findOne({
       where: { id: dto.serviceId },
@@ -48,71 +37,53 @@ export class BookingService {
     });
     if (!service) throw new NotFoundException('Service not found');
 
-    if (service.business.id !== business.id) {
-      throw new ForbiddenException('Service mismatch');
-    }
-
     const booking = this.bookingRepo.create({
       user: { id: userId } as any,
       business,
       service,
       scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : null,
-      priceSnapshot:
-        service.pricingType === 'FIXED'
-          ? service.price
-          : service.pricingType === 'RANGE'
-            ? service.minPrice
-            : null,
+      totalAmount: null, // decided after service
       status: BookingStatus.REQUESTED,
     });
 
     return this.bookingRepo.save(booking);
   }
 
-  /* USER: view my bookings */
   getMyBookings(userId: string) {
     return this.bookingRepo.find({
       where: { user: { id: userId } },
-      relations: ['user', 'business', 'service'],
+      relations: ['business', 'service'],
       order: { createdAt: 'DESC' },
     });
   }
 
-  /* USER: booking details */
   async getMyBookingById(userId: string, id: string) {
     const booking = await this.bookingRepo.findOne({
       where: { id },
       relations: ['user', 'business', 'service'],
     });
-    if (!booking) throw new NotFoundException('Booking not found');
+    if (!booking) throw new NotFoundException();
     if (booking.user.id !== userId) throw new ForbiddenException();
     return booking;
   }
 
-  /* USER: cancel booking */
   async cancelBooking(userId: string, id: string, reason?: string) {
     const booking = await this.getMyBookingById(userId, id);
 
-    if (booking.status !== BookingStatus.REQUESTED) {
-      throw new ForbiddenException('Cannot cancel this booking');
-    }
+    if (booking.status !== BookingStatus.REQUESTED)
+      throw new ForbiddenException('Cannot cancel');
 
     booking.status = BookingStatus.CANCELLED;
     booking.cancelReason = reason;
-
     return this.bookingRepo.save(booking);
   }
 
-  // src/components/bookings/bookings.service.ts
+  // ================= BUSINESS =================
 
-  async getBookingsForBusinessOwner(ownerId: string) {
+  getBookingsForBusinessOwner(ownerId: string) {
     return this.bookingRepo.find({
-      where: {
-        business: {
-          owner: { id: ownerId },
-        },
-      },
-      relations: ['user', 'service', 'business', 'business.owner'],
+      where: { business: { owner: { id: ownerId } } },
+      relations: ['user', 'service'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -120,53 +91,87 @@ export class BookingService {
   async acceptBooking(ownerId: string, bookingId: string) {
     const booking = await this.getBusinessBooking(ownerId, bookingId);
 
-    if (booking.status !== BookingStatus.REQUESTED) {
-      throw new ForbiddenException('Cannot accept booking');
-    }
+    if (booking.status !== BookingStatus.REQUESTED)
+      throw new ForbiddenException();
 
-    booking.status = BookingStatus.ACCEPTED;
+    booking.status = BookingStatus.BUSINESS_ACCEPTED;
     return this.bookingRepo.save(booking);
   }
 
   async rejectBooking(ownerId: string, bookingId: string, reason: string) {
     const booking = await this.getBusinessBooking(ownerId, bookingId);
 
-    if (booking.status !== BookingStatus.REQUESTED) {
-      throw new ForbiddenException('Cannot reject booking');
-    }
-
-    booking.status = BookingStatus.REJECTED;
+    booking.status = BookingStatus.BUSINESS_REJECTED;
     booking.cancelReason = reason;
-
     return this.bookingRepo.save(booking);
   }
 
-  async completeBooking(ownerId: string, bookingId: string) {
+  async startService(
+    ownerId: string,
+    bookingId: string,
+    beforeImages: string[],
+  ) {
     const booking = await this.getBusinessBooking(ownerId, bookingId);
 
-    if (
-      booking.status !== BookingStatus.ACCEPTED &&
-      booking.status !== BookingStatus.IN_PROGRESS
-    ) {
-      throw new ForbiddenException('Cannot complete booking');
-    }
+    if (booking.status !== BookingStatus.BUSINESS_ACCEPTED)
+      throw new ForbiddenException();
 
-    booking.status = BookingStatus.COMPLETED;
+    booking.beforeServiceImages = beforeImages;
+    booking.status = BookingStatus.SERVICE_STARTED;
+
     return this.bookingRepo.save(booking);
   }
 
-  // 🔐 Internal guard
+  async completeService(
+    ownerId: string,
+    bookingId: string,
+    afterImages: string[],
+    amount: number,
+  ) {
+    const booking = await this.getBusinessBooking(ownerId, bookingId);
+
+    if (booking.status !== BookingStatus.SERVICE_STARTED)
+      throw new ForbiddenException();
+
+    booking.afterServiceImages = afterImages;
+    booking.totalAmount = amount;
+    booking.status = BookingStatus.PAYMENT_PENDING;
+
+    return this.bookingRepo.save(booking);
+  }
+
+  async markPaymentCompleted(bookingId: string, razorpayPaymentId: string) {
+    const booking = await this.bookingRepo.findOne({
+      where: { id: bookingId },
+    });
+    if (!booking) throw new NotFoundException();
+
+    booking.status = BookingStatus.PAYMENT_COMPLETED;
+    booking.razorpayPaymentId = razorpayPaymentId;
+
+    return this.bookingRepo.save(booking);
+  }
+
+  async deliverVehicle(ownerId: string, bookingId: string) {
+    const booking = await this.getBusinessBooking(ownerId, bookingId);
+
+    if (booking.status !== BookingStatus.PAYMENT_COMPLETED)
+      throw new ForbiddenException();
+
+    booking.status = BookingStatus.VEHICLE_DELIVERED;
+    return this.bookingRepo.save(booking);
+  }
+
+  // ================= INTERNAL =================
+
   private async getBusinessBooking(ownerId: string, bookingId: string) {
     const booking = await this.bookingRepo.findOne({
       where: { id: bookingId },
       relations: ['business', 'business.owner'],
     });
 
-    if (!booking) throw new NotFoundException('Booking not found');
-
-    if (booking.business.owner.id !== ownerId) {
-      throw new ForbiddenException('Access denied');
-    }
+    if (!booking) throw new NotFoundException();
+    if (booking.business.owner.id !== ownerId) throw new ForbiddenException();
 
     return booking;
   }

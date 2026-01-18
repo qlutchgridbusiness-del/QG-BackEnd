@@ -10,12 +10,19 @@ import { Business } from '../business/business.entity';
 import { Services } from '../services/services.entity';
 
 export enum BookingStatus {
-  REQUESTED = 'REQUESTED', // user placed booking
-  ACCEPTED = 'ACCEPTED', // business accepted
-  REJECTED = 'REJECTED', // business rejected
-  IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED', // user or business cancelled
+  REQUESTED = 'REQUESTED',
+
+  BUSINESS_ACCEPTED = 'BUSINESS_ACCEPTED',
+  BUSINESS_REJECTED = 'BUSINESS_REJECTED',
+
+  SERVICE_STARTED = 'SERVICE_STARTED',
+  SERVICE_COMPLETED = 'SERVICE_COMPLETED',
+
+  PAYMENT_PENDING = 'PAYMENT_PENDING',
+  PAYMENT_COMPLETED = 'PAYMENT_COMPLETED',
+
+  VEHICLE_DELIVERED = 'VEHICLE_DELIVERED',
+  CANCELLED = 'CANCELLED',
 }
 
 @Entity('bookings')
@@ -35,9 +42,16 @@ export class Booking {
   @Column({ type: 'timestamp', nullable: true })
   scheduledAt: Date | null;
 
-  // 🔐 price snapshot at booking time
+  // 💰 final payable amount (after service)
   @Column({ type: 'decimal', nullable: true })
-  priceSnapshot?: number;
+  totalAmount?: number;
+
+  // 📸 images
+  @Column({ type: 'jsonb', nullable: true })
+  beforeServiceImages?: string[];
+
+  @Column({ type: 'jsonb', nullable: true })
+  afterServiceImages?: string[];
 
   @Column({
     type: 'enum',
@@ -48,6 +62,9 @@ export class Booking {
 
   @Column({ nullable: true })
   cancelReason?: string;
+
+  @Column({ nullable: true })
+  razorpayPaymentId?: string;
 
   @CreateDateColumn()
   createdAt: Date;
