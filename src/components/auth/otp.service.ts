@@ -9,7 +9,7 @@ export class OtpService {
 
   async sendOtp(phone: string) {
     const otp = this.generateOtp();
-    console.log('checkotp', otp);
+    // console.log('checkotp', otp);
     // Save OTP (5 mins expiry)
     this.otpStore.save(phone, otp, 5 * 60);
 
