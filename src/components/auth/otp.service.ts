@@ -22,7 +22,7 @@ export class OtpService {
         VAR1: otp,
       },
     };
-
+    console.log('checkpayload', payload);
     try {
       console.log(JSON.stringify(payload, null, 2));
       await axios.post('https://control.msg91.com/api/v5/flow/', payload, {
