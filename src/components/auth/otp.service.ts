@@ -19,7 +19,7 @@ export class OtpService {
       short_url: 0,
       mobiles: `91${phone}`,
       variables: {
-        OTP: otp,
+        VAR1: otp,
       },
     };
 
