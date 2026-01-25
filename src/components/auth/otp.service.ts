@@ -14,14 +14,16 @@ export class OtpService {
     this.otpStore.save(phone, otp, 5 * 60);
 
     const payload = {
-      template_id: process.env.MSG91_TEMPLATE_ID,
-      sender: process.env.MSG91_SENDER_ID,
-      short_url: 0,
-      mobiles: `91${phone}`,
-      variables: {
-        VAR1: otp,
-      },
+      template_id: '1007841928958579608', // OTP DLT template
+      short_url: '0',
+      recipients: [
+        {
+          mobiles: '919177391664',
+          VAR1: otp,
+        },
+      ],
     };
+
     console.log('checkpayload', payload);
     try {
       console.log(JSON.stringify(payload, null, 2));
