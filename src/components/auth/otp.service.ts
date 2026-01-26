@@ -14,7 +14,7 @@ export class OtpService {
     this.otpStore.save(phone, otp, 5 * 60);
 
     const payload = {
-      template_id: '6976469936b68068605a4aa6', // OTP DLT template
+      template_id: '6977062e8e910e1f2178df73', // OTP DLT template
       short_url: '0',
       recipients: [
         {
