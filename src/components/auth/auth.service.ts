@@ -49,29 +49,27 @@ export class AuthService {
     };
   }
 
-  // 🔹 REGISTER USING TEMP TOKEN
   async register(dto: RegisterDto, tempToken: string) {
-    let payload: any;
-
-    try {
-      payload = this.jwtService.verify(tempToken);
-    } catch {
-      throw new UnauthorizedException('Invalid or expired temp token');
-    }
-
-    if (payload.purpose !== 'OTP_VERIFIED') {
-      throw new UnauthorizedException('Invalid temp token');
-    }
+    // 🔐 Validate tempToken first
+    const payload = this.jwtService.verify(tempToken);
 
     if (payload.phone !== dto.phone) {
-      throw new UnauthorizedException('Phone mismatch');
+      throw new UnauthorizedException('Invalid temp token');
     }
 
     let user = await this.userRepo.findOne({
       where: { phone: dto.phone },
     });
 
-    if (!user) {
+    if (user) {
+      // ✅ UPDATE existing user instead of INSERT
+      user.name = dto.name ?? user.name;
+      user.email = dto.email ?? user.email;
+      user.role = dto.role === 'business' ? UserRole.BUSINESS : UserRole.USER;
+
+      await this.userRepo.save(user);
+    } else {
+      // ✅ INSERT only if truly new
       user = this.userRepo.create({
         phone: dto.phone,
         name: dto.name,
@@ -84,11 +82,11 @@ export class AuthService {
 
     // 🏢 Create business if needed
     if (user.role === UserRole.BUSINESS) {
-      const existing = await this.businessRepo.findOne({
+      const existingBusiness = await this.businessRepo.findOne({
         where: { owner: { id: user.id } },
       });
 
-      if (!existing) {
+      if (!existingBusiness) {
         const business = this.businessRepo.create({
           name: dto.name,
           phone: dto.phone,
