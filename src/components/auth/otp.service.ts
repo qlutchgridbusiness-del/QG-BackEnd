@@ -9,21 +9,19 @@ export class OtpService {
 
   async sendOtp(phone: string) {
     const otp = this.generateOtp();
-    // console.log('checkotp', otp);
+    console.log('checkotp', otp);
     // Save OTP (5 mins expiry)
     this.otpStore.save(phone, otp, 5 * 60);
-
     const payload = {
-      template_id: '6977062e8e910e1f2178df73', // OTP DLT template
-      short_url: '0',
+      template_id: process.env.MSG91_TEMPLATE_ID,
+      short_url: 0,
       recipients: [
         {
-          mobiles: '919177391664',
-          VAR1: '123456',
+          mobiles: `91${phone}`,
+          var1: otp,
         },
       ],
     };
-
     console.log('checkpayload', payload);
     try {
       console.log(JSON.stringify(payload, null, 2));
