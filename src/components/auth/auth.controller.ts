@@ -29,7 +29,7 @@ export class AuthController {
   @Post('register')
   @ApiBody({ type: RegisterDto })
   @ApiResponse({ status: 201, description: 'Registered successfully' })
-  async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+  async register(@Body() dto: RegisterDto, tempToken: string) {
+    return this.authService.register(dto, tempToken);
   }
 }
