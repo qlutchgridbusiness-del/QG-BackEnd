@@ -18,7 +18,7 @@ export class OtpService {
       recipients: [
         {
           mobiles: `91${phone}`,
-          var1: otp,
+          numeric: otp,
         },
       ],
     };
