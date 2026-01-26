@@ -19,7 +19,7 @@ export class OtpService {
       recipients: [
         {
           mobiles: '919177391664',
-          VAR1: otp,
+          VAR1: '123456',
         },
       ],
     };
