@@ -2,7 +2,7 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiBody, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, VerifyOtpDto } from './auth.dto';
+import { RegisterDto, VerifyOtpDto } from './auth.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -31,13 +31,5 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'Registered successfully' })
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
-  }
-
-  // 🔹 LOGIN (OTP already verified)
-  @Post('login')
-  @ApiBody({ type: LoginDto })
-  @ApiResponse({ status: 200, description: 'Login successful' })
-  async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto.phone);
   }
 }

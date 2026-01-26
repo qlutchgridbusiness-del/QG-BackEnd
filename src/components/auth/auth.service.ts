@@ -21,28 +21,48 @@ export class AuthService {
     private readonly businessRepo: Repository<Business>,
   ) {}
 
-  // 🔹 SEND OTP
+  /* -----------------------------
+     1️⃣ REQUEST OTP
+  ------------------------------ */
   async requestOtp(phone: string) {
-    console.log('check number', phone);
     return this.otpService.sendOtp(phone);
   }
 
-  // 🔹 VERIFY OTP
+  /* -----------------------------
+     2️⃣ VERIFY OTP
+     (NO TOKEN ISSUED HERE UNLESS USER EXISTS)
+  ------------------------------ */
   async verifyOtp(phone: string, otp: string) {
     const valid = await this.otpService.verifyOtp(phone, otp);
     if (!valid) {
       throw new UnauthorizedException('Invalid or expired OTP');
     }
-    return { message: 'OTP verified successfully' };
+
+    const user = await this.userRepo.findOne({
+      where: { phone },
+    });
+
+    // 🆕 New user → frontend must show onboarding
+    if (!user) {
+      return {
+        isNewUser: true,
+        phone,
+      };
+    }
+
+    // 👤 Existing user → login directly
+    return {
+      isNewUser: false,
+      ...this.issueToken(user),
+    };
   }
 
-  // 🔹 REGISTER
+  /* -----------------------------
+     3️⃣ REGISTER (ONLY AFTER OTP VERIFIED)
+  ------------------------------ */
   async register(dto: RegisterDto) {
-    // OTP MUST be verified before this
-    const otpValid = await this.otpService.verifyOtp(dto.phone, dto.otp);
-    if (!otpValid) {
-      throw new UnauthorizedException('OTP verification required');
-    }
+    // ❗ OTP must already be verified before calling register
+    // (do NOT verify OTP again here)
 
     let user = await this.userRepo.findOne({
       where: { phone: dto.phone },
@@ -55,24 +75,26 @@ export class AuthService {
         email: dto.email,
         role: dto.role === 'business' ? UserRole.BUSINESS : UserRole.USER,
       });
+
       await this.userRepo.save(user);
     }
 
-    // 🔹 Create Business if needed
-    if (dto.role === 'business') {
-      const existing = await this.businessRepo.findOne({
+    // 🏢 Create business if role = business
+    if (user.role === UserRole.BUSINESS) {
+      const existingBusiness = await this.businessRepo.findOne({
         where: { owner: { id: user.id } },
       });
 
-      if (!existing) {
+      if (!existingBusiness) {
         const business = this.businessRepo.create({
-          name: dto.name || dto.name,
+          name: dto.name,
           phone: dto.phone,
           email: dto.email,
           owner: user,
-          latitude: dto.latitude || null,
-          longitude: dto.longitude || null,
+          latitude: dto.latitude ?? null,
+          longitude: dto.longitude ?? null,
         });
+
         await this.businessRepo.save(business);
       }
     }
@@ -80,29 +102,18 @@ export class AuthService {
     return this.issueToken(user);
   }
 
-  // 🔹 LOGIN
-  async login(phone: string) {
-    const user = await this.userRepo.findOne({ where: { phone } });
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    return this.issueToken(user);
-  }
-
-  // 🔹 JWT ISSUER
+  /* -----------------------------
+     🔐 JWT ISSUER (PRIVATE)
+  ------------------------------ */
   private issueToken(user: User) {
     const token = this.jwtService.sign({
       sub: user.id,
       phone: user.phone,
       role: user.role,
-      email: user.email,
     });
 
     return {
-      message: 'Authentication successful',
       token,
-      role: user.role,
       user: {
         id: user.id,
         name: user.name,
