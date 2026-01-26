@@ -28,64 +28,76 @@ export class AuthService {
     return this.otpService.sendOtp(phone);
   }
 
-  /* -----------------------------
-     2️⃣ VERIFY OTP
-     (NO TOKEN ISSUED HERE UNLESS USER EXISTS)
-  ------------------------------ */
   async verifyOtp(phone: string, otp: string) {
     const valid = await this.otpService.verifyOtp(phone, otp);
     if (!valid) {
       throw new UnauthorizedException('Invalid or expired OTP');
     }
 
-    const user = await this.userRepo.findOne({
-      where: { phone },
-    });
+    const user = await this.userRepo.findOne({ where: { phone } });
 
-    // 🆕 New user → frontend must show onboarding
-    if (!user) {
-      return {
-        isNewUser: true,
-        phone,
-      };
+    // 🔹 Existing user → full login
+    if (user) {
+      return this.issueToken(user);
     }
 
-    // 👤 Existing user → login directly
+    // 🔹 New user → temp token
+    const tempToken = this.jwtService.sign(
+      { phone, purpose: 'REGISTER' },
+      { expiresIn: '10m' },
+    );
+
     return {
-      isNewUser: false,
-      ...this.issueToken(user),
+      isNewUser: true,
+      tempToken,
+      phone,
     };
   }
 
-  /* -----------------------------
-     3️⃣ REGISTER (ONLY AFTER OTP VERIFIED)
-  ------------------------------ */
-  async register(dto: RegisterDto) {
-    // ❗ OTP must already be verified before calling register
-    // (do NOT verify OTP again here)
+  async register(dto: RegisterDto, tempToken: string) {
+    const payload = this.jwtService.verify(tempToken);
+
+    if (payload.purpose !== 'REGISTER') {
+      throw new UnauthorizedException('Invalid registration token');
+    }
+
+    if (payload.phone !== dto.phone) {
+      throw new UnauthorizedException('Phone mismatch');
+    }
 
     let user = await this.userRepo.findOne({
-      where: { phone: dto.phone },
+      where: [{ phone: dto.phone }, dto.email ? { email: dto.email } : {}],
     });
 
     if (!user) {
-      user = this.userRepo.create({
-        phone: dto.phone,
-        name: dto.name,
-        email: dto.email,
-        role: dto.role === 'business' ? UserRole.BUSINESS : UserRole.USER,
-      });
+      try {
+        user = this.userRepo.create({
+          phone: dto.phone,
+          name: dto.name,
+          email: dto.email,
+          role: dto.role === 'business' ? UserRole.BUSINESS : UserRole.USER,
+        });
 
-      await this.userRepo.save(user);
+        await this.userRepo.save(user);
+      } catch (err: any) {
+        // 🔒 Handle race condition / duplicate submit
+        if (err.code === '23505') {
+          user = await this.userRepo.findOne({
+            where: { phone: dto.phone },
+          });
+        } else {
+          throw err;
+        }
+      }
     }
 
-    // 🏢 Create business if role = business
+    // 🏢 Create business if needed
     if (user.role === UserRole.BUSINESS) {
-      const existingBusiness = await this.businessRepo.findOne({
+      const existing = await this.businessRepo.findOne({
         where: { owner: { id: user.id } },
       });
 
-      if (!existingBusiness) {
+      if (!existing) {
         const business = this.businessRepo.create({
           name: dto.name,
           phone: dto.phone,
