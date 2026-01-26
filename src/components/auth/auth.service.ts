@@ -1,8 +1,7 @@
-// src/components/auth/auth.service.ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { User, UserRole } from '../user/user.entity';
 import { Business } from '../business/business.entity';
 import { RegisterDto } from './auth.dto';
@@ -21,13 +20,12 @@ export class AuthService {
     private readonly businessRepo: Repository<Business>,
   ) {}
 
-  /* -----------------------------
-     1️⃣ REQUEST OTP
-  ------------------------------ */
+  // 🔹 SEND OTP
   async requestOtp(phone: string) {
     return this.otpService.sendOtp(phone);
   }
 
+  // 🔹 VERIFY OTP → ISSUE TEMP TOKEN
   async verifyOtp(phone: string, otp: string) {
     const valid = await this.otpService.verifyOtp(phone, otp);
     if (!valid) {
@@ -36,29 +34,33 @@ export class AuthService {
 
     const user = await this.userRepo.findOne({ where: { phone } });
 
-    // 🔹 Existing user → full login
-    if (user) {
-      return this.issueToken(user);
-    }
-
-    // 🔹 New user → temp token
+    // ⏱️ TEMP TOKEN (5 min)
     const tempToken = this.jwtService.sign(
-      { phone, purpose: 'REGISTER' },
-      { expiresIn: '10m' },
+      {
+        phone,
+        purpose: 'OTP_VERIFIED',
+      },
+      { expiresIn: '5m' },
     );
 
     return {
-      isNewUser: true,
       tempToken,
-      phone,
+      isNewUser: !user,
     };
   }
 
+  // 🔹 REGISTER USING TEMP TOKEN
   async register(dto: RegisterDto, tempToken: string) {
-    const payload = this.jwtService.verify(tempToken);
+    let payload: any;
 
-    if (payload.purpose !== 'REGISTER') {
-      throw new UnauthorizedException('Invalid registration token');
+    try {
+      payload = this.jwtService.verify(tempToken);
+    } catch {
+      throw new UnauthorizedException('Invalid or expired temp token');
+    }
+
+    if (payload.purpose !== 'OTP_VERIFIED') {
+      throw new UnauthorizedException('Invalid temp token');
     }
 
     if (payload.phone !== dto.phone) {
@@ -66,29 +68,18 @@ export class AuthService {
     }
 
     let user = await this.userRepo.findOne({
-      where: [{ phone: dto.phone }, dto.email ? { email: dto.email } : {}],
+      where: { phone: dto.phone },
     });
 
     if (!user) {
-      try {
-        user = this.userRepo.create({
-          phone: dto.phone,
-          name: dto.name,
-          email: dto.email,
-          role: dto.role === 'business' ? UserRole.BUSINESS : UserRole.USER,
-        });
+      user = this.userRepo.create({
+        phone: dto.phone,
+        name: dto.name,
+        email: dto.email,
+        role: dto.role === 'business' ? UserRole.BUSINESS : UserRole.USER,
+      });
 
-        await this.userRepo.save(user);
-      } catch (err: any) {
-        // 🔒 Handle race condition / duplicate submit
-        if (err.code === '23505') {
-          user = await this.userRepo.findOne({
-            where: { phone: dto.phone },
-          });
-        } else {
-          throw err;
-        }
-      }
+      await this.userRepo.save(user);
     }
 
     // 🏢 Create business if needed
@@ -114,17 +105,17 @@ export class AuthService {
     return this.issueToken(user);
   }
 
-  /* -----------------------------
-     🔐 JWT ISSUER (PRIVATE)
-  ------------------------------ */
+  // 🔹 ISSUE REAL JWT
   private issueToken(user: User) {
     const token = this.jwtService.sign({
       sub: user.id,
       phone: user.phone,
       role: user.role,
+      email: user.email,
     });
 
     return {
+      message: 'Authentication successful',
       token,
       user: {
         id: user.id,
