@@ -5,9 +5,15 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: [
+      'http://localhost:3000',
+      'https://qlutchgrid.com',
+      'https://www.qlutchgrid.com',
+      'https://api.qlutchgrid.com',
+    ],
     credentials: true,
   });
+
   const config = new DocumentBuilder()
     .setTitle('Qlutchgrid API')
     .setDescription('API documentation for Qlutchgrid backend')
