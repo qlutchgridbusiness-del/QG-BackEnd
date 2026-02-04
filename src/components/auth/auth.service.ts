@@ -98,7 +98,7 @@ export class AuthService {
           phone,
           purpose: 'OTP_VERIFIED',
         },
-        { expiresIn: '5m' },
+        { expiresIn: '60m' },
       );
 
       return {
