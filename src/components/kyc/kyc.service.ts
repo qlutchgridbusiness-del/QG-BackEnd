@@ -5,14 +5,19 @@ import axios from 'axios';
 @Injectable()
 export class KycService {
   private baseUrl = process.env.SUREPASS_API_URL!;
-  private token = process.env.SUREPASS_TOKEN!;
-  private customerId = process.env.SUREPASS_CUSTOMER_ID!;
+  private token = process.env.SUREPASS_API_KEY!;
 
-  private headers = {
-    Authorization: this.token,
-    'Content-Type': 'application/json',
-    'X-Customer-Id': this.customerId,
-  };
+  private getAuthHeader() {
+    const raw = this.token || '';
+    return raw.toLowerCase().startsWith('bearer ') ? raw : `Bearer ${raw}`;
+  }
+
+  private get headers() {
+    return {
+      Authorization: this.getAuthHeader(),
+      'Content-Type': 'application/json',
+    };
+  }
 
   async verifyPan(pan: string) {
     Logger.log('check-------------->', `${this.baseUrl}/pan/pan`);
