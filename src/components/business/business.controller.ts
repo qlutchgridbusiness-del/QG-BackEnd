@@ -7,6 +7,7 @@ import {
   Param,
   Get,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -182,6 +183,37 @@ export class BusinessController {
     @Body() dto: Partial<CreateServiceDto>,
   ) {
     return this.businessService.updateService(req.user.id, serviceId, dto);
+  }
+
+  @Post(':id/terms')
+  @ApiOperation({ summary: 'Accept business terms and conditions' })
+  @ApiParam({
+    name: 'id',
+    description: 'Business ID',
+    type: String,
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        signatureName: { type: 'string', example: 'John Doe' },
+      },
+      required: ['signatureName'],
+    },
+  })
+  acceptTerms(
+    @Req() req,
+    @Param('id') id: string,
+    @Body('signatureName') signatureName: string,
+  ) {
+    if (!signatureName || !signatureName.trim()) {
+      throw new BadRequestException('Signature name is required');
+    }
+    return this.businessService.acceptTerms(
+      req.user.id,
+      id,
+      signatureName.trim(),
+    );
   }
 
   @Get(':id/services')

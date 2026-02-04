@@ -34,6 +34,9 @@ export class Business {
   @Column({ nullable: true })
   gst?: string;
 
+  @Column({ nullable: true })
+  aadhaarCard?: string;
+
   @Column({ default: false })
   panVerified: boolean;
 
@@ -48,7 +51,31 @@ export class Business {
   status: BusinessStatus;
 
   @Column({ nullable: true })
+  planId?: string;
+
+  @Column({ nullable: true })
+  planAmount?: number;
+
+  @Column({ nullable: true })
+  planOrderId?: string;
+
+  @Column({ nullable: true })
+  planPaymentId?: string;
+
+  @Column({ nullable: true })
+  planStatus?: 'PENDING' | 'ACTIVE';
+
+  @Column({ type: 'timestamp', nullable: true })
+  planActivatedAt?: Date;
+
+  @Column({ nullable: true })
   kycRejectReason?: string;
+
+  @Column({ nullable: true })
+  termsSignatureName?: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  termsAcceptedAt?: Date;
 
   @ManyToOne(() => User, (u) => u.businesses, { eager: true })
   owner: User;

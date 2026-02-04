@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BusinessKyc } from './business-kyc.entity';
 import { Repository } from 'typeorm';
@@ -17,8 +17,12 @@ export class BusinessKycService {
     private surepass: KycService,
   ) {}
 
-  async submitPan(businessId: string, pan: string) {
-    const business = await this.businessRepo.findOneBy({ id: businessId });
+  async submitPan(ownerId: string, businessId: string, pan: string) {
+    const business = await this.businessRepo.findOne({
+      where: { id: businessId, owner: { id: ownerId } },
+      relations: ['owner'],
+    });
+    if (!business) throw new NotFoundException('Business not found');
 
     const res = await this.surepass.verifyPan(pan);
 
@@ -36,11 +40,20 @@ export class BusinessKycService {
     return kyc;
   }
 
-  async submitGst(businessId: string, gst: string) {
+  async submitGst(ownerId: string, businessId: string, gst: string) {
+    const business = await this.businessRepo.findOne({
+      where: { id: businessId, owner: { id: ownerId } },
+      relations: ['owner'],
+    });
+    if (!business) throw new NotFoundException('Business not found');
+
     const kyc = await this.kycRepo.findOne({
       where: { business: { id: businessId } },
       relations: ['business'],
     });
+    if (!kyc) {
+      throw new NotFoundException('KYC record not found. Submit PAN first.');
+    }
 
     const res = await this.surepass.verifyGst(gst);
 
@@ -55,5 +68,27 @@ export class BusinessKycService {
     }
 
     return this.kycRepo.save(kyc);
+  }
+
+  async getStatus(ownerId: string, businessId: string) {
+    const business = await this.businessRepo.findOne({
+      where: { id: businessId, owner: { id: ownerId } },
+      relations: ['owner'],
+    });
+    if (!business) throw new NotFoundException('Business not found');
+
+    const kyc = await this.kycRepo.findOne({
+      where: { business: { id: businessId } },
+      relations: ['business'],
+    });
+
+    return (
+      kyc || {
+        business,
+        panVerified: false,
+        gstVerified: false,
+        status: 'PENDING',
+      }
+    );
   }
 }

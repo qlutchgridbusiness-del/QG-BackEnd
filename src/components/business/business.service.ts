@@ -131,6 +131,24 @@ export class BusinessService {
     return business;
   }
 
+  async acceptTerms(
+    ownerId: string,
+    businessId: string,
+    signatureName: string,
+  ) {
+    const business = await this.businessRepo.findOne({
+      where: { id: businessId, owner: { id: ownerId } },
+    });
+
+    if (!business) {
+      throw new NotFoundException('Business not found or not owned by user');
+    }
+
+    business.termsSignatureName = signatureName;
+    business.termsAcceptedAt = new Date();
+    return this.businessRepo.save(business);
+  }
+
   async getServices(ownerId: string, businessId: string) {
     const business = await this.businessRepo.findOne({
       where: { id: businessId, owner: { id: ownerId } },
