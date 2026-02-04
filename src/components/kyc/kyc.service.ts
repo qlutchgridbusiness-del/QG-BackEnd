@@ -4,7 +4,7 @@ import axios from 'axios';
 
 @Injectable()
 export class KycService {
-  private baseUrl = process.env.SUREPASS_BASE_URL!;
+  private baseUrl = process.env.SUREPASS_API_URL!;
   private token = process.env.SUREPASS_TOKEN!;
   private customerId = process.env.SUREPASS_CUSTOMER_ID!;
 
