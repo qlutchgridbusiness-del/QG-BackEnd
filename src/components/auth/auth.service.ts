@@ -44,14 +44,26 @@ export class AuthService {
       });
 
       if (existingBusiness) {
-        const repairedUser = await this.userRepo.save(
-          this.userRepo.create({
-            phone,
-            name: existingBusiness.name,
-            email: existingBusiness.email ?? null,
-            role: UserRole.BUSINESS,
-          }),
-        );
+        const email = existingBusiness.email ?? null;
+        let repairedUser = email
+          ? await this.userRepo.findOne({ where: { email } })
+          : null;
+
+        if (repairedUser) {
+          repairedUser.phone = phone;
+          repairedUser.role = UserRole.BUSINESS;
+          repairedUser.name = repairedUser.name || existingBusiness.name;
+          repairedUser = await this.userRepo.save(repairedUser);
+        } else {
+          repairedUser = await this.userRepo.save(
+            this.userRepo.create({
+              phone,
+              name: existingBusiness.name,
+              email,
+              role: UserRole.BUSINESS,
+            }),
+          );
+        }
 
         existingBusiness.owner = repairedUser;
         await this.businessRepo.save(existingBusiness);
