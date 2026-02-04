@@ -37,6 +37,47 @@ export class AuthService {
 
     // 🆕 New user → temp token for registration
     if (!user) {
+      // If a business already exists with this phone, repair missing user
+      const existingBusiness = await this.businessRepo.findOne({
+        where: { phone },
+        relations: ['owner'],
+      });
+
+      if (existingBusiness) {
+        const repairedUser = await this.userRepo.save(
+          this.userRepo.create({
+            phone,
+            name: existingBusiness.name,
+            email: existingBusiness.email ?? null,
+            role: UserRole.BUSINESS,
+          }),
+        );
+
+        existingBusiness.owner = repairedUser;
+        await this.businessRepo.save(existingBusiness);
+
+        const token = this.jwtService.sign(
+          {
+            sub: repairedUser.id,
+            role: repairedUser.role,
+            phone: repairedUser.phone,
+            email: repairedUser.email,
+          },
+          { expiresIn: '7d' },
+        );
+
+        return {
+          isNewUser: false,
+          token,
+          user: {
+            id: repairedUser.id,
+            phone: repairedUser.phone,
+            role: repairedUser.role,
+            name: repairedUser.name,
+          },
+        };
+      }
+
       if (!phone) {
         throw new UnauthorizedException('Phone number missing');
       }
