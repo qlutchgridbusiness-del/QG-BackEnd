@@ -19,22 +19,43 @@ export class KycService {
     };
   }
 
+  private normalizeError(err: any) {
+    const status = err?.response?.status;
+    const data = err?.response?.data;
+    const message =
+      data?.message || data?.error || err?.message || 'Verification failed';
+    return {
+      success: false,
+      status_code: status || 500,
+      message,
+      data: null,
+    };
+  }
+
   async verifyPan(pan: string) {
     Logger.log('check-------------->', `${this.baseUrl}/pan/pan`);
-    const res = await axios.post(
-      `${this.baseUrl}/pan/pan`,
-      { id_number: pan },
-      { headers: this.headers },
-    );
-    return res.data;
+    try {
+      const res = await axios.post(
+        `${this.baseUrl}/pan/pan`,
+        { id_number: pan },
+        { headers: this.headers },
+      );
+      return res.data;
+    } catch (err: any) {
+      return this.normalizeError(err);
+    }
   }
 
   async verifyGst(gst: string) {
-    const res = await axios.post(
-      `${this.baseUrl}/corporate/gstin`,
-      { id_number: gst },
-      { headers: this.headers },
-    );
-    return res.data;
+    try {
+      const res = await axios.post(
+        `${this.baseUrl}/corporate/gstin`,
+        { id_number: gst },
+        { headers: this.headers },
+      );
+      return res.data;
+    } catch (err: any) {
+      return this.normalizeError(err);
+    }
   }
 }

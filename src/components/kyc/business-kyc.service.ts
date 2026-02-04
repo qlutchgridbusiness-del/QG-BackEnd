@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BusinessKyc } from './business-kyc.entity';
 import { Repository } from 'typeorm';
@@ -31,11 +35,16 @@ export class BusinessKycService {
       panNumber: pan,
       panVerified: res.success === true,
       panResponse: res,
-      status: res.success === true ? 'VERIFIED' : 'PENDING',
+      status: res.success === true ? 'VERIFIED' : 'REJECTED',
+      rejectionReason: res.success === true ? null : res.message,
     });
 
     business.status = BusinessStatus.KYC_PENDING;
     await this.businessRepo.save(business);
+
+    if (res.success !== true) {
+      throw new BadRequestException(res.message || 'Invalid PAN');
+    }
 
     return kyc;
   }
@@ -60,10 +69,15 @@ export class BusinessKycService {
     kyc.gstNumber = gst;
     kyc.gstVerified = res.success === true;
     kyc.gstResponse = res;
+    if (res.success !== true) {
+      kyc.status = 'REJECTED';
+      kyc.rejectionReason = res.message || 'Invalid GST';
+      await this.kycRepo.save(kyc);
+      throw new BadRequestException(kyc.rejectionReason);
+    }
 
-    if (kyc.panVerified && kyc.gstVerified) {
+    if (kyc.panVerified) {
       kyc.status = 'VERIFIED';
-      kyc.business.status = BusinessStatus.ACTIVE;
       await this.businessRepo.save(kyc.business);
     }
 
