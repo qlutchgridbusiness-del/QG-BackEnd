@@ -31,7 +31,7 @@ export class BusinessKycService {
       panNumber: pan,
       panVerified: res.success === true,
       panResponse: res,
-      status: res.success ?? 'PENDING',
+      status: res.success === true ? 'VERIFIED' : 'PENDING',
     });
 
     business.status = BusinessStatus.KYC_PENDING;
