@@ -37,6 +37,9 @@ export class AuthService {
 
     // 🆕 New user → temp token for registration
     if (!user) {
+      if (!phone) {
+        throw new UnauthorizedException('Phone number missing');
+      }
       const tempToken = this.jwtService.sign(
         {
           phone,
@@ -54,8 +57,10 @@ export class AuthService {
     // ✅ Existing user → login token
     const token = this.jwtService.sign(
       {
-        userId: user.id,
+        sub: user.id, // keep consistent with JwtStrategy
         role: user.role,
+        phone: user.phone,
+        email: user.email,
       },
       { expiresIn: '7d' }, // or whatever you use
     );
