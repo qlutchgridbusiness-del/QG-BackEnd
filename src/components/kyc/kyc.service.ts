@@ -1,5 +1,5 @@
 // src/components/kyc/kyc.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 
 @Injectable()
@@ -15,6 +15,7 @@ export class KycService {
   };
 
   async verifyPan(pan: string) {
+    Logger.log('check-------------->', `${this.baseUrl}/pan/pan`);
     const res = await axios.post(
       `${this.baseUrl}/pan/pan`,
       { id_number: pan },
