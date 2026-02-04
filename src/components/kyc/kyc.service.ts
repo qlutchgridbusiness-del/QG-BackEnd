@@ -24,6 +24,10 @@ export class KycService {
     const data = err?.response?.data;
     const message =
       data?.message || data?.error || err?.message || 'Verification failed';
+    Logger.error(
+      `Surepass error: ${status || 'unknown'} ${message}`,
+      JSON.stringify(data || {}),
+    );
     return {
       success: false,
       status_code: status || 500,
