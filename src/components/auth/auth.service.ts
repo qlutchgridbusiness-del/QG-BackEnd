@@ -28,24 +28,47 @@ export class AuthService {
   // 🔹 VERIFY OTP → ISSUE TEMP TOKEN
   async verifyOtp(phone: string, otp: string) {
     const valid = await this.otpService.verifyOtp(phone, otp);
+
     if (!valid) {
       throw new UnauthorizedException('Invalid or expired OTP');
     }
 
     const user = await this.userRepo.findOne({ where: { phone } });
 
-    // ⏱️ TEMP TOKEN (5 min)
-    const tempToken = this.jwtService.sign(
+    // 🆕 New user → temp token for registration
+    if (!user) {
+      const tempToken = this.jwtService.sign(
+        {
+          phone,
+          purpose: 'OTP_VERIFIED',
+        },
+        { expiresIn: '5m' },
+      );
+
+      return {
+        isNewUser: true,
+        tempToken,
+      };
+    }
+
+    // ✅ Existing user → login token
+    const token = this.jwtService.sign(
       {
-        phone,
-        purpose: 'OTP_VERIFIED',
+        userId: user.id,
+        role: user.role,
       },
-      { expiresIn: '5m' },
+      { expiresIn: '7d' }, // or whatever you use
     );
 
     return {
-      tempToken,
-      isNewUser: !user,
+      isNewUser: false,
+      token,
+      user: {
+        id: user.id,
+        phone: user.phone,
+        role: user.role,
+        name: user.name, // optional
+      },
     };
   }
 
