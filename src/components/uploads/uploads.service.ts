@@ -44,7 +44,6 @@ export class UploadsService {
       Key: key,
       Body: body,
       ContentType: file.mimetype,
-      ACL: 'public-read',
     });
     await this.s3.send(cmd);
     // Delete local file
