@@ -47,11 +47,15 @@ export class PaymentsController {
       body.bookingId,
     );
 
-    if (booking.status !== BookingStatus.SERVICE_COMPLETED) {
+    if (
+      booking.status !== BookingStatus.SERVICE_COMPLETED &&
+      booking.status !== BookingStatus.PAYMENT_PENDING
+    ) {
       throw new BadRequestException('Service not completed yet');
     }
 
     booking.status = BookingStatus.PAYMENT_PENDING;
+    await this.bookingService.saveBooking(booking);
     const order = await this.paymentsService.createOrder(
       booking.totalAmount * 100,
       booking.id,
@@ -88,7 +92,8 @@ export class PaymentsController {
 
     await this.bookingService.markPaymentCompleted(
       body.bookingId,
-      body.razorpay_order_id,
+      body.razorpay_payment_id,
+      true,
     );
 
     return {

@@ -33,6 +33,7 @@ export class BookingService {
   async createBooking(userId: string, dto: CreateBookingDto) {
     const business = await this.businessRepo.findOne({
       where: { id: dto.businessId },
+      relations: ['owner'],
     });
     if (!business) throw new NotFoundException('Business not found');
 
@@ -158,11 +159,22 @@ export class BookingService {
 
     await this.bookingRepo.save(booking);
     await this.whatsappService.notifyUser(booking, 'SERVICE_COMPLETED');
+    if (booking.user?.id) {
+      await this.pushService.notifyUser(booking.user.id, {
+        title: 'Service Completed',
+        body: `Your service is completed. Please pay to pick up your vehicle.`,
+        url: `/user-dashboard/bookings/${booking.id}`,
+      });
+    }
 
     return booking;
   }
 
-  async markPaymentCompleted(bookingId: string, razorpayPaymentId: string) {
+  async markPaymentCompleted(
+    bookingId: string,
+    razorpayPaymentId: string,
+    autoDeliver = false,
+  ) {
     const booking = await this.bookingRepo.findOne({
       where: { id: bookingId },
     });
@@ -171,7 +183,15 @@ export class BookingService {
     booking.status = BookingStatus.PAYMENT_COMPLETED;
     booking.razorpayPaymentId = razorpayPaymentId;
 
-    return this.bookingRepo.save(booking);
+    const saved = await this.bookingRepo.save(booking);
+
+    if (autoDeliver) {
+      saved.status = BookingStatus.VEHICLE_DELIVERED;
+      await this.bookingRepo.save(saved);
+      await this.whatsappService.notifyUser(saved, 'VEHICLE_DELIVERED');
+    }
+
+    return saved;
   }
 
   async deliverVehicle(ownerId: string, bookingId: string) {
@@ -190,12 +210,16 @@ export class BookingService {
   private async getBusinessBooking(ownerId: string, bookingId: string) {
     const booking = await this.bookingRepo.findOne({
       where: { id: bookingId },
-      relations: ['business', 'business.owner'],
+      relations: ['business', 'business.owner', 'user'],
     });
 
     if (!booking) throw new NotFoundException();
     if (booking.business.owner.id !== ownerId) throw new ForbiddenException();
 
     return booking;
+  }
+
+  async saveBooking(booking: Booking) {
+    return this.bookingRepo.save(booking);
   }
 }

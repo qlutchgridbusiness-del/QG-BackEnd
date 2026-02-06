@@ -113,7 +113,8 @@ export class BusinessBookingsController {
   })
   @ApiForbiddenResponse({ description: 'Invalid status transition' })
   completeBooking(@Req() req, @Param('id') id: string) {
-    return this.bookingService.markPaymentCompleted(req.user.id, id);
+    // legacy endpoint: treat as delivery after payment
+    return this.bookingService.deliverVehicle(req.user.id, id);
   }
 
   @Put(':id/start-service')
