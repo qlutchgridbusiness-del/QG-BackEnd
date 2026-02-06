@@ -108,8 +108,6 @@ export class BusinessService {
 
     await this.serviceRepo.save(entities);
 
-    await this.serviceRepo.save(entities);
-
     // 🔥 Enforce minimum services rule
     const totalServices = await this.serviceRepo.count({
       where: { business: { id: businessId } },
@@ -159,6 +157,32 @@ export class BusinessService {
       where: { business: { id: business.id } },
       order: { name: 'ASC' },
     });
+  }
+
+  async updateSettings(ownerId: string, businessId: string, dto: any) {
+    const business = await this.businessRepo.findOne({
+      where: { id: businessId, owner: { id: ownerId } },
+    });
+
+    if (!business) {
+      throw new NotFoundException('Business not found or not owned by user');
+    }
+
+    Object.assign(business, {
+      acceptingOrders: dto.acceptingOrders,
+      workingDays: dto.workingDays,
+      morningStart: dto.morningStart,
+      morningEnd: dto.morningEnd,
+      eveningStart: dto.eveningStart,
+      eveningEnd: dto.eveningEnd,
+      breaks: dto.breaks,
+      holidays: dto.holidays,
+      maxBookingsPerDay: dto.maxBookingsPerDay,
+      radius: dto.radius,
+      location: dto.location,
+    });
+
+    return this.businessRepo.save(business);
   }
 
   async updateService(ownerId: string, serviceId: string, dto: any) {

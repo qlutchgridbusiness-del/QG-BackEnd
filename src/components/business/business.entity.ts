@@ -77,6 +77,40 @@ export class Business {
   @Column({ type: 'timestamp', nullable: true })
   termsAcceptedAt?: Date;
 
+  // ⚙️ Business settings (optional)
+  @Column({ type: 'text', array: true, nullable: true })
+  workingDays?: string[];
+
+  @Column({ nullable: true })
+  acceptingOrders?: boolean;
+
+  @Column({ nullable: true })
+  morningStart?: string;
+
+  @Column({ nullable: true })
+  morningEnd?: string;
+
+  @Column({ nullable: true })
+  eveningStart?: string;
+
+  @Column({ nullable: true })
+  eveningEnd?: string;
+
+  @Column({ type: 'jsonb', nullable: true })
+  breaks?: { start: string; end: string }[];
+
+  @Column({ type: 'text', array: true, nullable: true })
+  holidays?: string[];
+
+  @Column({ nullable: true })
+  maxBookingsPerDay?: number;
+
+  @Column({ nullable: true })
+  radius?: number;
+
+  @Column({ type: 'jsonb', nullable: true })
+  location?: { lat: number; lng: number };
+
   @ManyToOne(() => User, (u) => u.businesses, { eager: true })
   owner: User;
 

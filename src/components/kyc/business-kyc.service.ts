@@ -39,6 +39,7 @@ export class BusinessKycService {
       rejectionReason: res.success === true ? null : res.message,
     });
 
+    business.panVerified = res.success === true;
     business.status = BusinessStatus.KYC_PENDING;
     await this.businessRepo.save(business);
 
@@ -69,6 +70,7 @@ export class BusinessKycService {
     kyc.gstNumber = gst;
     kyc.gstVerified = res.success === true;
     kyc.gstResponse = res;
+    business.gstVerified = res.success === true;
     if (res.success !== true) {
       kyc.status = 'REJECTED';
       kyc.rejectionReason = res.message || 'Invalid GST';
@@ -78,8 +80,9 @@ export class BusinessKycService {
 
     if (kyc.panVerified) {
       kyc.status = 'VERIFIED';
-      await this.businessRepo.save(kyc.business);
     }
+
+    await this.businessRepo.save(business);
 
     return this.kycRepo.save(kyc);
   }

@@ -185,6 +185,18 @@ export class BusinessController {
     return this.businessService.updateService(req.user.id, serviceId, dto);
   }
 
+  @Put(':id/settings')
+  @ApiOperation({ summary: 'Update business settings' })
+  @ApiBearerAuth()
+  @ApiParam({
+    name: 'id',
+    description: 'Business ID',
+    type: String,
+  })
+  updateSettings(@Req() req, @Param('id') id: string, @Body() dto: any) {
+    return this.businessService.updateSettings(req.user.id, id, dto);
+  }
+
   @Post(':id/terms')
   @ApiOperation({ summary: 'Accept business terms and conditions' })
   @ApiParam({
