@@ -10,6 +10,7 @@ import { Services } from '../services/services.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateBookingDto } from './bookings.dto';
 import { WhatsappService } from '../notifications/whatsapp.service';
+import { PushService } from '../push/push.service';
 
 @Injectable()
 export class BookingService {
@@ -24,6 +25,7 @@ export class BookingService {
     private readonly serviceRepo: Repository<Services>,
 
     private readonly whatsappService: WhatsappService,
+    private readonly pushService: PushService,
   ) {}
 
   // ================= USER =================
@@ -49,7 +51,18 @@ export class BookingService {
       status: BookingStatus.REQUESTED,
     });
 
-    return this.bookingRepo.save(booking);
+    const saved = await this.bookingRepo.save(booking);
+
+    // 🔔 Notify business owner via web push
+    if (business?.owner?.id) {
+      await this.pushService.notifyUser(business.owner.id, {
+        title: 'New Booking Request',
+        body: `${service.name} • ${saved.id.slice(0, 6)}`,
+        url: '/business-dashboard/bookings',
+      });
+    }
+
+    return saved;
   }
 
   getMyBookings(userId: string) {

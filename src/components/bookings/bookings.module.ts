@@ -9,6 +9,7 @@ import { ServicesService } from '../services/services.service';
 import { Services } from '../services/services.entity';
 import { Business } from '../business/business.entity';
 import { WhatsappService } from '../notifications/whatsapp.service';
+import { PushModule } from '../push/push.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { WhatsappService } from '../notifications/whatsapp.service';
       Services,
       Business,
     ]),
+    PushModule,
   ],
   providers: [
     BookingService,
