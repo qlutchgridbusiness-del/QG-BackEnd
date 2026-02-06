@@ -12,4 +12,16 @@ export class PushController {
     await this.pushService.upsertSubscription(req.user.id, body);
     return { success: true };
   }
+
+  @Post('test')
+  async test(@Req() req) {
+    const result = await this.pushService.notifyUser(req.user.id, {
+      title: 'Test Notification',
+      body: 'Push notifications are working.',
+      url: 'https://qlutchgrid.com/business-dashboard',
+      ts: new Date().toISOString(),
+    });
+    return { success: true, result };
+  }
+
 }
