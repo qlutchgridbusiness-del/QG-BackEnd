@@ -11,10 +11,12 @@ import { BusinessBookingsController } from '../bookings/business-bookings.contro
 import { BookingService } from '../bookings/bookings.service';
 import { Booking } from '../bookings/bookings.entity';
 import { WhatsappService } from '../notifications/whatsapp.service';
+import { PushModule } from '../push/push.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Business, User, Services, SocialPost, Booking]),
+    PushModule,
   ],
   providers: [BusinessService, BookingService, WhatsappService],
   controllers: [BusinessController, BusinessBookingsController],
