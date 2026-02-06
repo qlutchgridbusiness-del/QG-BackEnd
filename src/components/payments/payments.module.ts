@@ -9,9 +9,13 @@ import { Business } from '../business/business.entity';
 import { Booking } from '../bookings/bookings.entity';
 import { Services } from '../services/services.entity';
 import { WhatsappService } from '../notifications/whatsapp.service';
+import { PushModule } from '../push/push.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Business, Booking, Services])],
+  imports: [
+    TypeOrmModule.forFeature([Business, Booking, Services]),
+    PushModule,
+  ],
   providers: [PaymentsService, BookingService, WhatsappService],
   controllers: [PaymentsController],
   exports: [PaymentsService],
