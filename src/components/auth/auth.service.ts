@@ -44,26 +44,45 @@ export class AuthService {
       });
 
       if (existingBusiness) {
+        // If business already has an owner with this phone, use it
+        if (existingBusiness.owner?.phone === phone) {
+          const token = this.jwtService.sign(
+            {
+              sub: existingBusiness.owner.id,
+              role: existingBusiness.owner.role,
+              phone: existingBusiness.owner.phone,
+              email: existingBusiness.owner.email,
+            },
+            { expiresIn: '7d' },
+          );
+
+          return {
+            isNewUser: false,
+            token,
+            user: {
+              id: existingBusiness.owner.id,
+              phone: existingBusiness.owner.phone,
+              role: existingBusiness.owner.role,
+              name: existingBusiness.owner.name,
+            },
+          };
+        }
+
         const email = existingBusiness.email ?? null;
-        let repairedUser = email
+        const emailOwner = email
           ? await this.userRepo.findOne({ where: { email } })
           : null;
 
-        if (repairedUser) {
-          repairedUser.phone = phone;
-          repairedUser.role = UserRole.BUSINESS;
-          repairedUser.name = repairedUser.name || existingBusiness.name;
-          repairedUser = await this.userRepo.save(repairedUser);
-        } else {
-          repairedUser = await this.userRepo.save(
-            this.userRepo.create({
-              phone,
-              name: existingBusiness.name,
-              email,
-              role: UserRole.BUSINESS,
-            }),
-          );
-        }
+        const safeEmail = emailOwner ? null : email;
+
+        const repairedUser = await this.userRepo.save(
+          this.userRepo.create({
+            phone,
+            name: existingBusiness.name,
+            email: safeEmail,
+            role: UserRole.BUSINESS,
+          }),
+        );
 
         existingBusiness.owner = repairedUser;
         await this.businessRepo.save(existingBusiness);
