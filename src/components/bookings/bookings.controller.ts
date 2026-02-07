@@ -36,4 +36,10 @@ export class BookingController {
   cancel(@Req() req, @Param('id') id: string) {
     return this.bookingService.cancelBooking(req.user.id, id);
   }
+
+  @Post(':id/pickup-request')
+  @ApiOperation({ summary: 'User requests vehicle pickup' })
+  pickupRequest(@Req() req, @Param('id') id: string) {
+    return this.bookingService.requestPickup(req.user.id, id);
+  }
 }

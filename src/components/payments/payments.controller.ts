@@ -93,7 +93,7 @@ export class PaymentsController {
     await this.bookingService.markPaymentCompleted(
       body.bookingId,
       body.razorpay_payment_id,
-      true,
+      false,
     );
 
     return {

@@ -8,7 +8,7 @@ import { PaymentsService } from '../payments/payments.service';
 import { ServicesService } from '../services/services.service';
 import { Services } from '../services/services.entity';
 import { Business } from '../business/business.entity';
-import { WhatsappService } from '../notifications/whatsapp.service';
+import { WhatsappModule } from '../notifications/whatsapp.module';
 import { PushModule } from '../push/push.module';
 
 @Module({
@@ -20,13 +20,9 @@ import { PushModule } from '../push/push.module';
       Business,
     ]),
     PushModule,
+    WhatsappModule,
   ],
-  providers: [
-    BookingService,
-    PaymentsService,
-    ServicesService,
-    WhatsappService,
-  ],
+  providers: [BookingService, PaymentsService, ServicesService],
   controllers: [BookingController],
   exports: [BookingService],
 })

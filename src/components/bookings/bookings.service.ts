@@ -10,6 +10,7 @@ import { Services } from '../services/services.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateBookingDto } from './bookings.dto';
 import { WhatsappService } from '../notifications/whatsapp.service';
+import { DltService } from '../notifications/dlt.service';
 import { PushService } from '../push/push.service';
 
 @Injectable()
@@ -26,6 +27,7 @@ export class BookingService {
 
     private readonly whatsappService: WhatsappService,
     private readonly pushService: PushService,
+    private readonly dltService: DltService,
   ) {}
 
   // ================= USER =================
@@ -63,6 +65,11 @@ export class BookingService {
       });
     }
 
+    await this.whatsappService.notifyUser(saved, 'BOOKING_CREATED');
+    await this.whatsappService.notifyBusiness(saved, 'BOOKING_CREATED');
+    await this.dltService.notifyUser(saved, 'BOOKING_CREATED');
+    await this.dltService.notifyBusiness(saved, 'BOOKING_CREATED');
+
     return saved;
   }
 
@@ -92,7 +99,17 @@ export class BookingService {
 
     booking.status = BookingStatus.CANCELLED;
     booking.cancelReason = reason;
-    return this.bookingRepo.save(booking);
+    const saved = await this.bookingRepo.save(booking);
+    await this.whatsappService.notifyBusiness(saved, 'BOOKING_CANCELLED');
+    await this.dltService.notifyBusiness(saved, 'BOOKING_CANCELLED');
+    if (saved.business?.owner?.id) {
+      await this.pushService.notifyUser(saved.business.owner.id, {
+        title: 'Booking Cancelled',
+        body: `Booking ${saved.id.slice(0, 6)} was cancelled by the user.`,
+        url: '/business-dashboard/bookings',
+      });
+    }
+    return saved;
   }
 
   // ================= BUSINESS =================
@@ -112,7 +129,26 @@ export class BookingService {
       throw new ForbiddenException();
 
     booking.status = BookingStatus.BUSINESS_ACCEPTED;
-    return this.bookingRepo.save(booking);
+    const saved = await this.bookingRepo.save(booking);
+    await this.whatsappService.notifyUser(saved, 'BOOKING_ACCEPTED');
+    await this.whatsappService.notifyBusiness(saved, 'BOOKING_ACCEPTED');
+    await this.dltService.notifyUser(saved, 'BOOKING_ACCEPTED');
+    await this.dltService.notifyBusiness(saved, 'BOOKING_ACCEPTED');
+    if (saved.user?.id) {
+      await this.pushService.notifyUser(saved.user.id, {
+        title: 'Booking Accepted',
+        body: `Your booking has been accepted by ${saved.business?.name}.`,
+        url: `/user-dashboard/bookings/${saved.id}`,
+      });
+    }
+    if (saved.business?.owner?.id) {
+      await this.pushService.notifyUser(saved.business.owner.id, {
+        title: 'Booking Accepted',
+        body: `You accepted booking ${saved.id.slice(0, 6)}.`,
+        url: '/business-dashboard/bookings',
+      });
+    }
+    return saved;
   }
 
   async rejectBooking(ownerId: string, bookingId: string, reason: string) {
@@ -120,7 +156,26 @@ export class BookingService {
 
     booking.status = BookingStatus.BUSINESS_REJECTED;
     booking.cancelReason = reason;
-    return this.bookingRepo.save(booking);
+    const saved = await this.bookingRepo.save(booking);
+    await this.whatsappService.notifyUser(saved, 'BOOKING_REJECTED');
+    await this.whatsappService.notifyBusiness(saved, 'BOOKING_REJECTED');
+    await this.dltService.notifyUser(saved, 'BOOKING_REJECTED');
+    await this.dltService.notifyBusiness(saved, 'BOOKING_REJECTED');
+    if (saved.user?.id) {
+      await this.pushService.notifyUser(saved.user.id, {
+        title: 'Booking Rejected',
+        body: `Your booking was rejected by ${saved.business?.name}.`,
+        url: `/user-dashboard/bookings/${saved.id}`,
+      });
+    }
+    if (saved.business?.owner?.id) {
+      await this.pushService.notifyUser(saved.business.owner.id, {
+        title: 'Booking Rejected',
+        body: `You rejected booking ${saved.id.slice(0, 6)}.`,
+        url: '/business-dashboard/bookings',
+      });
+    }
+    return saved;
   }
 
   async startService(
@@ -138,6 +193,23 @@ export class BookingService {
 
     await this.bookingRepo.save(booking);
     await this.whatsappService.notifyUser(booking, 'SERVICE_STARTED');
+    await this.whatsappService.notifyBusiness(booking, 'SERVICE_STARTED');
+    await this.dltService.notifyUser(booking, 'SERVICE_STARTED');
+    await this.dltService.notifyBusiness(booking, 'SERVICE_STARTED');
+    if (booking.user?.id) {
+      await this.pushService.notifyUser(booking.user.id, {
+        title: 'Service Started',
+        body: `Service has started for your booking.`,
+        url: `/user-dashboard/bookings/${booking.id}`,
+      });
+    }
+    if (booking.business?.owner?.id) {
+      await this.pushService.notifyUser(booking.business.owner.id, {
+        title: 'Service Started',
+        body: `Service started for booking ${booking.id.slice(0, 6)}.`,
+        url: '/business-dashboard/bookings',
+      });
+    }
 
     return booking;
   }
@@ -159,11 +231,21 @@ export class BookingService {
 
     await this.bookingRepo.save(booking);
     await this.whatsappService.notifyUser(booking, 'SERVICE_COMPLETED');
+    await this.whatsappService.notifyBusiness(booking, 'SERVICE_COMPLETED');
+    await this.dltService.notifyUser(booking, 'PAYMENT_PENDING');
+    await this.dltService.notifyBusiness(booking, 'PAYMENT_PENDING');
     if (booking.user?.id) {
       await this.pushService.notifyUser(booking.user.id, {
         title: 'Service Completed',
         body: `Your service is completed. Please pay to pick up your vehicle.`,
         url: `/user-dashboard/bookings/${booking.id}`,
+      });
+    }
+    if (booking.business?.owner?.id) {
+      await this.pushService.notifyUser(booking.business.owner.id, {
+        title: 'Service Completed',
+        body: `Service completed for booking ${booking.id.slice(0, 6)}.`,
+        url: '/business-dashboard/bookings',
       });
     }
 
@@ -177,6 +259,7 @@ export class BookingService {
   ) {
     const booking = await this.bookingRepo.findOne({
       where: { id: bookingId },
+      relations: ['user', 'business', 'business.owner'],
     });
     if (!booking) throw new NotFoundException();
 
@@ -184,11 +267,30 @@ export class BookingService {
     booking.razorpayPaymentId = razorpayPaymentId;
 
     const saved = await this.bookingRepo.save(booking);
+    await this.whatsappService.notifyUser(saved, 'PAYMENT_COMPLETED');
+    await this.whatsappService.notifyBusiness(saved, 'PAYMENT_COMPLETED');
+    await this.dltService.notifyUser(saved, 'PAYMENT_COMPLETED');
+    await this.dltService.notifyBusiness(saved, 'PAYMENT_COMPLETED');
+    if (saved.user?.id) {
+      await this.pushService.notifyUser(saved.user.id, {
+        title: 'Payment Completed',
+        body: `Payment received. You can pick up your vehicle.`,
+        url: `/user-dashboard/bookings/${saved.id}`,
+      });
+    }
+    if (saved.business?.owner?.id) {
+      await this.pushService.notifyUser(saved.business.owner.id, {
+        title: 'Payment Completed',
+        body: `Payment received for booking ${saved.id.slice(0, 6)}.`,
+        url: '/business-dashboard/bookings',
+      });
+    }
 
     if (autoDeliver) {
       saved.status = BookingStatus.VEHICLE_DELIVERED;
       await this.bookingRepo.save(saved);
       await this.whatsappService.notifyUser(saved, 'VEHICLE_DELIVERED');
+      await this.dltService.notifyUser(saved, 'VEHICLE_DELIVERED');
     }
 
     return saved;
@@ -203,6 +305,43 @@ export class BookingService {
     booking.status = BookingStatus.VEHICLE_DELIVERED;
     await this.bookingRepo.save(booking);
     await this.whatsappService.notifyUser(booking, 'VEHICLE_DELIVERED');
+    await this.whatsappService.notifyBusiness(booking, 'VEHICLE_DELIVERED');
+    await this.dltService.notifyUser(booking, 'VEHICLE_DELIVERED');
+    await this.dltService.notifyBusiness(booking, 'VEHICLE_DELIVERED');
+    if (booking.user?.id) {
+      await this.pushService.notifyUser(booking.user.id, {
+        title: 'Vehicle Delivered',
+        body: `Your vehicle has been delivered. Thank you!`,
+        url: `/user-dashboard/bookings/${booking.id}`,
+      });
+    }
+    if (booking.business?.owner?.id) {
+      await this.pushService.notifyUser(booking.business.owner.id, {
+        title: 'Vehicle Delivered',
+        body: `Booking ${booking.id.slice(0, 6)} marked delivered.`,
+        url: '/business-dashboard/bookings',
+      });
+    }
+  }
+
+  async requestPickup(userId: string, bookingId: string) {
+    const booking = await this.getMyBookingById(userId, bookingId);
+
+    if (booking.status !== BookingStatus.PAYMENT_COMPLETED)
+      throw new ForbiddenException('Payment not completed');
+
+    await this.whatsappService.notifyBusiness(booking, 'PAYMENT_COMPLETED');
+    await this.dltService.notifyBusiness(booking, 'PAYMENT_COMPLETED');
+
+    if (booking.business?.owner?.id) {
+      await this.pushService.notifyUser(booking.business.owner.id, {
+        title: 'Pickup Requested',
+        body: `User is ready to pick up vehicle for booking ${booking.id.slice(0, 6)}.`,
+        url: '/business-dashboard/bookings',
+      });
+    }
+
+    return { success: true };
   }
 
   // ================= INTERNAL =================
