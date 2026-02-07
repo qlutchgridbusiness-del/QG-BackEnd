@@ -18,7 +18,8 @@ export class DltService {
   private readonly msg91Url =
     process.env.MSG91_FLOW_URL || 'https://control.msg91.com/api/v5/flow/';
   private readonly msg91AuthKey = process.env.MSG91_AUTH_KEY;
-  private readonly webUrl = process.env.WEB_BASE_URL || 'https://qlutchgrid.com';
+  private readonly webUrl =
+    process.env.WEB_BASE_URL || 'https://qlutchgrid.com';
 
   private readonly templates = {
     BOOKING_CREATED:
@@ -102,6 +103,12 @@ export class DltService {
     message: string,
   ) {
     try {
+      const normalized = {
+        // common flow variable names
+        var1: variables.alphanumeric || variables.numeric || '',
+        var2: variables.url || variables.alphanumeric || '',
+        var3: variables.numeric || '',
+      };
       const payload = {
         template_id: templateId,
         short_url: 0,
@@ -109,19 +116,16 @@ export class DltService {
           {
             mobiles: `91${phone}`,
             ...variables,
+            ...normalized,
           },
         ],
       };
-      await axios.post(
-        this.msg91Url,
-        payload,
-        {
-          headers: {
-            authkey: this.msg91AuthKey!,
-            'Content-Type': 'application/json',
-          },
+      await axios.post(this.msg91Url, payload, {
+        headers: {
+          authkey: this.msg91AuthKey!,
+          'Content-Type': 'application/json',
         },
-      );
+      });
     } catch (err) {
       this.logger.error('DLT SMS failed', err?.response?.data || err.message);
     }
