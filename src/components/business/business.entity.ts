@@ -74,6 +74,9 @@ export class Business {
   @Column({ nullable: true })
   termsSignatureName?: string;
 
+  @Column({ nullable: true })
+  termsSignatureUrl?: string;
+
   @Column({ type: 'timestamp', nullable: true })
   termsAcceptedAt?: Date;
 

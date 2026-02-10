@@ -209,22 +209,28 @@ export class BusinessController {
       type: 'object',
       properties: {
         signatureName: { type: 'string', example: 'John Doe' },
+        signatureUrl: { type: 'string', example: 'https://.../uploads/sign.png' },
       },
-      required: ['signatureName'],
+      required: ['signatureName', 'signatureUrl'],
     },
   })
   acceptTerms(
     @Req() req,
     @Param('id') id: string,
     @Body('signatureName') signatureName: string,
+    @Body('signatureUrl') signatureUrl: string,
   ) {
     if (!signatureName || !signatureName.trim()) {
       throw new BadRequestException('Signature name is required');
+    }
+    if (!signatureUrl || !signatureUrl.trim()) {
+      throw new BadRequestException('Signature image is required');
     }
     return this.businessService.acceptTerms(
       req.user.id,
       id,
       signatureName.trim(),
+      signatureUrl.trim(),
     );
   }
 

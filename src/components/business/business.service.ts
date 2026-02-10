@@ -133,6 +133,7 @@ export class BusinessService {
     ownerId: string,
     businessId: string,
     signatureName: string,
+    signatureUrl: string,
   ) {
     const business = await this.businessRepo.findOne({
       where: { id: businessId, owner: { id: ownerId } },
@@ -143,6 +144,7 @@ export class BusinessService {
     }
 
     business.termsSignatureName = signatureName;
+    business.termsSignatureUrl = signatureUrl;
     business.termsAcceptedAt = new Date();
     return this.businessRepo.save(business);
   }
