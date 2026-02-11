@@ -30,14 +30,19 @@ export class BusinessKycService {
 
     const res = await this.surepass.verifyPan(pan);
 
-    const kyc = await this.kycRepo.save({
-      business,
-      panNumber: pan,
-      panVerified: res.success === true,
-      panResponse: res,
-      status: res.success === true ? 'VERIFIED' : 'REJECTED',
-      rejectionReason: res.success === true ? null : res.message,
+    const existing = await this.kycRepo.findOne({
+      where: { business: { id: businessId } },
+      relations: ['business'],
     });
+
+    const kyc = existing || this.kycRepo.create({ business });
+    kyc.panNumber = pan;
+    kyc.panVerified = res.success === true;
+    kyc.panResponse = res;
+    kyc.status = res.success === true ? 'VERIFIED' : 'REJECTED';
+    kyc.rejectionReason = res.success === true ? null : res.message;
+
+    const savedKyc = await this.kycRepo.save(kyc);
 
     business.panVerified = res.success === true;
     business.status = BusinessStatus.KYC_PENDING;
@@ -47,7 +52,7 @@ export class BusinessKycService {
       throw new BadRequestException(res.message || 'Invalid PAN');
     }
 
-    return kyc;
+    return savedKyc;
   }
 
   async submitGst(ownerId: string, businessId: string, gst: string) {
