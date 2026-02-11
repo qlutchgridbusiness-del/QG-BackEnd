@@ -97,7 +97,15 @@ export class BusinessService {
     if (!business) {
       throw new NotFoundException('Business not found or not owned by user');
     }
-    if (business.status !== BusinessStatus.ACTIVE) {
+    const allowedStatuses = [
+      BusinessStatus.DRAFT,
+      BusinessStatus.PROFILE_COMPLETED,
+      BusinessStatus.CONTRACT_PENDING,
+      BusinessStatus.KYC_PENDING,
+      BusinessStatus.KYC_UNDER_REVIEW,
+      BusinessStatus.ACTIVE,
+    ];
+    if (!allowedStatuses.includes(business.status)) {
       throw new ForbiddenException(
         'Your business is under review. Services can be added after approval.',
       );
