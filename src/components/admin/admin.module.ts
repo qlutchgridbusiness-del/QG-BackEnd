@@ -19,9 +19,10 @@ import { AdminKycService } from './kyc/admin-kyc.service';
 
 import { AdminContractsController } from './contracts/admin-contracts.controller';
 import { AdminContractsService } from './contracts/admin-contracts.service';
+import { PushModule } from '../push/push.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Business, BusinessKyc])],
+  imports: [TypeOrmModule.forFeature([User, Business, BusinessKyc]), PushModule],
   controllers: [
     AdminDashboardController,
     AdminUsersController,

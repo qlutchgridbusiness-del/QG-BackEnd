@@ -97,6 +97,11 @@ export class BusinessService {
     if (!business) {
       throw new NotFoundException('Business not found or not owned by user');
     }
+    if (business.status !== BusinessStatus.ACTIVE) {
+      throw new ForbiddenException(
+        'Your business is under review. Services can be added after approval.',
+      );
+    }
 
     const entities = services.map((s) =>
       this.serviceRepo.create({
@@ -169,6 +174,11 @@ export class BusinessService {
     if (!business) {
       throw new NotFoundException('Business not found or not owned by user');
     }
+    if (business.status !== BusinessStatus.ACTIVE) {
+      throw new ForbiddenException(
+        'Your business is under review. Settings can be updated after approval.',
+      );
+    }
 
     Object.assign(business, {
       acceptingOrders: dto.acceptingOrders,
@@ -195,6 +205,11 @@ export class BusinessService {
 
     if (!service) throw new NotFoundException();
     if (service.business.owner.id !== ownerId) throw new ForbiddenException();
+    if (service.business.status !== BusinessStatus.ACTIVE) {
+      throw new ForbiddenException(
+        'Your business is under review. Services can be updated after approval.',
+      );
+    }
 
     Object.assign(service, dto);
     return this.serviceRepo.save(service);

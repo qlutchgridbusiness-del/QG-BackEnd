@@ -42,4 +42,11 @@ export class AdminBusinessesController {
   suspend(@Param('id') id: string) {
     return this.service.suspendBusiness(id);
   }
+
+  @Post(':id/request-signature')
+  @ApiOperation({ summary: 'Request signature re-upload' })
+  @ApiOkResponse({ type: AdminActionResponseDto })
+  requestSignature(@Param('id') id: string) {
+    return this.service.requestSignatureReupload(id);
+  }
 }

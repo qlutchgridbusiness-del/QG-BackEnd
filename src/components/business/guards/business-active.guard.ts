@@ -13,7 +13,7 @@ export class BusinessActiveGuard implements CanActivate {
     const business = req.business;
 
     if (!business || business.status !== BusinessStatus.ACTIVE) {
-      throw new ForbiddenException('Complete KYC to unlock this feature');
+      throw new ForbiddenException('Business pending admin approval');
     }
 
     return true;

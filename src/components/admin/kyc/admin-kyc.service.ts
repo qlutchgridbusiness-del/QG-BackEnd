@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -20,6 +21,9 @@ export class AdminKycService {
   ) {}
 
   async approveBusiness(businessId: string) {
+    throw new ForbiddenException(
+      'KYC approval is automated and not controlled by admin',
+    );
     const kyc = await this.kycRepo.findOne({
       where: { business: { id: businessId } },
       relations: ['business'],
@@ -47,6 +51,9 @@ export class AdminKycService {
   }
 
   async rejectBusiness(businessId: string, reason: string) {
+    throw new ForbiddenException(
+      'KYC rejection is automated and not controlled by admin',
+    );
     const kyc = await this.kycRepo.findOne({
       where: { business: { id: businessId } },
       relations: ['business'],
