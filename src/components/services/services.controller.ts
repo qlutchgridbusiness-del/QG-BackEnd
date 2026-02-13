@@ -4,6 +4,7 @@ import {
   NotFoundException,
   Param,
   Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
@@ -55,10 +56,8 @@ export class ServicesController {
     description: 'Service details including business info',
     type: Services,
   })
-  async getServiceById(@Param('id') id: string) {
-    console.log('check50', id);
+  async getServiceById(@Param('id', new ParseUUIDPipe()) id: string) {
     const service = await this.servicesService.findOneById(id);
-    console.log('check52', id);
     if (!service)
       throw new NotFoundException(`Service with ID ${id} not found`);
     return service;
