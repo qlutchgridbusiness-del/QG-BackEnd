@@ -68,6 +68,9 @@ export class Business {
   @Column({ type: 'timestamp', nullable: true })
   planActivatedAt?: Date;
 
+  @Column({ type: 'timestamp', nullable: true })
+  planDueAt?: Date;
+
   @Column({ nullable: true })
   kycRejectReason?: string;
 

@@ -60,9 +60,24 @@ export class BusinessService {
   }
 
   async getMyBusinesses(ownerId: string) {
-    return this.businessRepo.find({
+    const businesses = await this.businessRepo.find({
       where: { owner: { id: ownerId } },
     });
+    const now = Date.now();
+    for (const b of businesses) {
+      if (
+        b.planDueAt &&
+        b.planAmount &&
+        b.planAmount > 0 &&
+        b.planDueAt.getTime() < now &&
+        b.status === BusinessStatus.ACTIVE
+      ) {
+        b.status = BusinessStatus.SUSPENDED;
+        b.planStatus = 'PENDING';
+        await this.businessRepo.save(b);
+      }
+    }
+    return businesses;
   }
 
   async getNearbyBusinesses(lat: number, lng: number, radiusKm = 10) {
@@ -139,6 +154,17 @@ export class BusinessService {
       where: { id: businessId, owner: { id: ownerId } },
     });
     if (!business) throw new NotFoundException();
+    if (
+      business.planDueAt &&
+      business.planAmount &&
+      business.planAmount > 0 &&
+      business.planDueAt.getTime() < Date.now() &&
+      business.status === BusinessStatus.ACTIVE
+    ) {
+      business.status = BusinessStatus.SUSPENDED;
+      business.planStatus = 'PENDING';
+      await this.businessRepo.save(business);
+    }
     return business;
   }
 

@@ -22,6 +22,7 @@ const PLAN_PRICES: Record<string, number> = {
   GROWTH: 100000,
   ELITE: 5999,
 };
+const PLAN_DURATION_DAYS = Number(process.env.PLAN_DURATION_DAYS || 30);
 
 @Controller('payments')
 @UseGuards(JwtAuthGuard)
@@ -189,6 +190,7 @@ export class PaymentsController {
       business.planAmount = 0;
       business.planStatus = 'ACTIVE';
       business.planActivatedAt = new Date();
+      business.planDueAt = null;
       business.status = BusinessStatus.ACTIVE;
       await this.businessRepo.save(business);
 
@@ -219,6 +221,9 @@ export class PaymentsController {
     business.planPaymentId = body.razorpay_payment_id;
     business.planStatus = 'ACTIVE';
     business.planActivatedAt = new Date();
+    business.planDueAt = new Date(
+      Date.now() + PLAN_DURATION_DAYS * 24 * 60 * 60 * 1000,
+    );
     business.status = BusinessStatus.ACTIVE;
     await this.businessRepo.save(business);
 

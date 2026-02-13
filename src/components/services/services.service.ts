@@ -26,6 +26,9 @@ export class ServicesService {
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.business', 'b')
       .where('b.status = :status', { status: 'ACTIVE' }) // only active businesses
+      .andWhere(
+        '(b.planDueAt IS NULL OR b.planDueAt >= NOW() OR b.planAmount = 0)',
+      )
       .orderBy('s.name', 'ASC');
 
     // 🔍 Search by service name
