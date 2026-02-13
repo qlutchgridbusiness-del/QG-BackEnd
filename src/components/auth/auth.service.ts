@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -156,6 +156,9 @@ export class AuthService {
     if (payload.phone !== dto.phone) {
       throw new UnauthorizedException('Invalid temp token');
     }
+    if (dto.role === 'user' && !dto.email) {
+      throw new BadRequestException('Email is required for user registration');
+    }
 
     let user = await this.userRepo.findOne({
       where: { phone: dto.phone },
@@ -198,6 +201,36 @@ export class AuthService {
 
         await this.businessRepo.save(business);
       }
+    }
+
+    return this.issueToken(user);
+  }
+
+  async adminLogin(email: string, password: string) {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminEmail || !adminPassword) {
+      throw new UnauthorizedException('Admin credentials not configured');
+    }
+
+    if (email !== adminEmail || password !== adminPassword) {
+      throw new UnauthorizedException('Invalid admin credentials');
+    }
+
+    let user = await this.userRepo.findOne({ where: { email: adminEmail } });
+    if (!user) {
+      user = await this.userRepo.save(
+        this.userRepo.create({
+          email: adminEmail,
+          name: 'Admin',
+          role: UserRole.ADMIN,
+          isActive: true,
+        }),
+      );
+    } else if (user.role !== UserRole.ADMIN) {
+      user.role = UserRole.ADMIN;
+      await this.userRepo.save(user);
     }
 
     return this.issueToken(user);

@@ -28,3 +28,11 @@ export class LoginDto {
   @ApiProperty()
   phone: string;
 }
+
+export class AdminLoginDto {
+  @ApiProperty()
+  email: string;
+
+  @ApiProperty()
+  password: string;
+}

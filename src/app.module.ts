@@ -12,6 +12,7 @@ import { UserModule } from './components/user/user.module';
 import { SocialModule } from './components/social/social.module';
 import { PushModule } from './components/push/push.module';
 import { UploadsModule } from './components/uploads/uploads.module';
+import { ClientLogsModule } from './components/client-logs/client-logs.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { UploadsModule } from './components/uploads/uploads.module';
     SocialModule,
     PushModule,
     UploadsModule,
+    ClientLogsModule,
   ],
 })
 export class AppModule {}

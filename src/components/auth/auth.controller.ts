@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { RegisterDto, VerifyOtpDto } from './auth.dto';
+import { AdminLoginDto, RegisterDto, VerifyOtpDto } from './auth.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -45,5 +45,13 @@ export class AuthController {
 
     const tempToken = authHeader.replace('Bearer ', '').trim();
     return this.authService.register(dto, tempToken);
+  }
+
+  // 🔹 ADMIN EMAIL/PASSWORD LOGIN
+  @Post('admin-login')
+  @ApiBody({ type: AdminLoginDto })
+  @ApiResponse({ status: 200, description: 'Admin login successful' })
+  async adminLogin(@Body() dto: AdminLoginDto) {
+    return this.authService.adminLogin(dto.email, dto.password);
   }
 }

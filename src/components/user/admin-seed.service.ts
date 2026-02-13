@@ -11,14 +11,14 @@ export class AdminSeedService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    const phone = process.env.ADMIN_PHONE;
-    if (!phone) {
-      Logger.warn('ADMIN_PHONE not set. Admin seed skipped.');
-      return;
-    }
-
     const name = process.env.ADMIN_NAME || 'Admin';
     const email = process.env.ADMIN_EMAIL || null;
+    const phone = process.env.ADMIN_PHONE || null;
+
+    if (!email && !phone) {
+      Logger.warn('ADMIN_EMAIL or ADMIN_PHONE not set. Admin seed skipped.');
+      return;
+    }
 
     let user = await this.userRepo.findOne({ where: { phone } });
 
@@ -41,12 +41,12 @@ export class AdminSeedService implements OnModuleInit {
       }
 
       await this.userRepo.save(user);
-      Logger.log(`Admin user ensured for phone ${phone}`);
+      Logger.log(`Admin user ensured for ${email || phone}`);
       return;
     }
 
     const created = this.userRepo.create({
-      phone,
+      phone: phone || null,
       name,
       email: email || undefined,
       role: UserRole.ADMIN,
@@ -54,6 +54,6 @@ export class AdminSeedService implements OnModuleInit {
     });
 
     await this.userRepo.save(created);
-    Logger.log(`Admin user created for phone ${phone}`);
+    Logger.log(`Admin user created for ${email || phone}`);
   }
 }

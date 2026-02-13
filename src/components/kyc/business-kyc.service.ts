@@ -45,7 +45,13 @@ export class BusinessKycService {
     const savedKyc = await this.kycRepo.save(kyc);
 
     business.panVerified = res.success === true;
-    business.status = BusinessStatus.KYC_PENDING;
+    if (
+      business.status !== BusinessStatus.CONTRACT_PENDING &&
+      business.status !== BusinessStatus.ACTIVE &&
+      business.status !== BusinessStatus.SUSPENDED
+    ) {
+      business.status = BusinessStatus.KYC_PENDING;
+    }
     await this.businessRepo.save(business);
 
     if (res.success !== true) {

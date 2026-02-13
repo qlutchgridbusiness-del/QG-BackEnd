@@ -115,7 +115,6 @@ export class BusinessService {
     const allowedStatuses = [
       BusinessStatus.DRAFT,
       BusinessStatus.PROFILE_COMPLETED,
-      BusinessStatus.CONTRACT_PENDING,
       BusinessStatus.KYC_PENDING,
       BusinessStatus.KYC_UNDER_REVIEW,
       BusinessStatus.ACTIVE,
