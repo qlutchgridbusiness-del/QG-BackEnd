@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post } from '@nestjs/common';
+import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import {
   ApiOkResponse,
   ApiOperation,
@@ -8,8 +8,11 @@ import {
 import { AdminBusinessesService } from './admin-businesses.service';
 import { AdminActionResponseDto } from '../dto/admin-response.dto';
 import { AdminBusinessDto } from './admin-businesses.dto';
+import { AdminGuard } from 'src/components/auth/admin.guard';
+import { JwtAuthGuard } from 'src/components/auth/jwt.auth-guard';
 
 @ApiTags('Admin – Businesses')
+@UseGuards(JwtAuthGuard, AdminGuard)
 @Controller('admin/businesses')
 export class AdminBusinessesController {
   constructor(private readonly service: AdminBusinessesService) {}

@@ -6,11 +6,14 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AdminKycService } from './admin-kyc.service';
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AdminKycDto, RejectKycDto } from './admin-kyc.dto';
 import { AdminActionResponseDto } from '../dto/admin-response.dto';
+import { AdminGuard } from 'src/components/auth/admin.guard';
+import { JwtAuthGuard } from 'src/components/auth/jwt.auth-guard';
 
 @ApiTags('Admin – Business KYC')
+@UseGuards(JwtAuthGuard, AdminGuard)
 @Controller('admin/kyc')
 export class AdminKycController {
   constructor(private readonly adminKyc: AdminKycService) {}

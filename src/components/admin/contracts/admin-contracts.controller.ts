@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post } from '@nestjs/common';
+import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import {
   ApiOkResponse,
   ApiOperation,
@@ -8,8 +8,11 @@ import {
 import { AdminContractsService } from './admin-contracts.service';
 import { AdminContractDto } from './admin-contracts.dto';
 import { AdminActionResponseDto } from '../dto/admin-response.dto';
+import { AdminGuard } from 'src/components/auth/admin.guard';
+import { JwtAuthGuard } from 'src/components/auth/jwt.auth-guard';
 
 @ApiTags('Admin – Contracts')
+@UseGuards(JwtAuthGuard, AdminGuard)
 @Controller('admin/contracts')
 export class AdminContractsController {
   constructor(private readonly service: AdminContractsService) {}
