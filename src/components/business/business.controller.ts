@@ -8,6 +8,7 @@ import {
   Get,
   UseGuards,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -40,6 +41,12 @@ import { Services } from '../services/services.entity';
 export class BusinessController {
   constructor(private readonly businessService: BusinessService) {}
 
+  private ensureNotAdmin(req: any) {
+    if (req?.user?.role === 'ADMIN') {
+      throw new ForbiddenException('Admin accounts cannot access business flows');
+    }
+  }
+
   @Post()
   @ApiOperation({ summary: 'Create a new business' })
   @ApiCreatedResponse({
@@ -49,6 +56,7 @@ export class BusinessController {
   @ApiBadRequestResponse({ description: 'Invalid payload' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   create(@Req() req, @Body() dto: CreateBusinessDto) {
+    this.ensureNotAdmin(req);
     return this.businessService.createBusiness(req.user.id, dto);
   }
 
@@ -71,6 +79,7 @@ export class BusinessController {
     @Param('id') id: string,
     @Body() dto: Partial<CreateBusinessDto>,
   ) {
+    this.ensureNotAdmin(req);
     return this.businessService.updateBusiness(req.user.id, id, dto);
   }
 
@@ -82,6 +91,7 @@ export class BusinessController {
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   myBusinesses(@Req() req) {
+    this.ensureNotAdmin(req);
     return this.businessService.getMyBusinesses(req.user.id);
   }
 
@@ -145,6 +155,7 @@ export class BusinessController {
     @Param('id') businessId: string,
     @Body() body: AddServicesDto,
   ) {
+    this.ensureNotAdmin(req);
     return this.businessService.addServices(
       req.user.id,
       businessId,
@@ -182,6 +193,7 @@ export class BusinessController {
     @Param('serviceId') serviceId: string,
     @Body() dto: Partial<CreateServiceDto>,
   ) {
+    this.ensureNotAdmin(req);
     return this.businessService.updateService(req.user.id, serviceId, dto);
   }
 
@@ -194,6 +206,7 @@ export class BusinessController {
     type: String,
   })
   updateSettings(@Req() req, @Param('id') id: string, @Body() dto: any) {
+    this.ensureNotAdmin(req);
     return this.businessService.updateSettings(req.user.id, id, dto);
   }
 
@@ -220,6 +233,7 @@ export class BusinessController {
     @Body('signatureName') signatureName: string,
     @Body('signatureUrl') signatureUrl: string,
   ) {
+    this.ensureNotAdmin(req);
     if (!signatureName || !signatureName.trim()) {
       throw new BadRequestException('Signature name is required');
     }
@@ -242,6 +256,7 @@ export class BusinessController {
     type: String,
   })
   submitApplication(@Req() req, @Param('id') id: string) {
+    this.ensureNotAdmin(req);
     return this.businessService.submitApplication(req.user.id, id);
   }
 
@@ -260,6 +275,7 @@ export class BusinessController {
   @ApiNotFoundResponse({ description: 'Business not found' })
   @ApiForbiddenResponse({ description: 'Not owner of this business' })
   getMyServices(@Req() req, @Param('id') id: string) {
+    this.ensureNotAdmin(req);
     return this.businessService.getServices(req.user.id, id);
   }
 
@@ -278,6 +294,7 @@ export class BusinessController {
   @ApiNotFoundResponse({ description: 'Business not found' })
   @ApiForbiddenResponse({ description: 'Not owner of this business' })
   getBusiness(@Req() req, @Param('id') id: string) {
+    this.ensureNotAdmin(req);
     return this.businessService.getBusinessById(req.user.id, id);
   }
 }
