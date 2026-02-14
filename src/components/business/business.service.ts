@@ -65,7 +65,21 @@ export class BusinessService {
     // NEVER allow status changes from business side
     delete (dto as any).status;
 
-    Object.assign(business, dto);
+    const nextDto: any = { ...dto };
+    if (nextDto.latitude === '' || nextDto.latitude === undefined) {
+      nextDto.latitude = null;
+    }
+    if (nextDto.longitude === '' || nextDto.longitude === undefined) {
+      nextDto.longitude = null;
+    }
+    if (nextDto.latitude !== null && nextDto.latitude !== undefined) {
+      nextDto.latitude = Number(nextDto.latitude);
+    }
+    if (nextDto.longitude !== null && nextDto.longitude !== undefined) {
+      nextDto.longitude = Number(nextDto.longitude);
+    }
+
+    Object.assign(business, nextDto);
     return this.businessRepo.save(business);
   }
 
