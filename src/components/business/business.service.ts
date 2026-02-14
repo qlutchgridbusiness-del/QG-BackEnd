@@ -188,6 +188,23 @@ export class BusinessService {
     return this.businessRepo.save(business);
   }
 
+  async submitApplication(ownerId: string, businessId: string) {
+    const business = await this.businessRepo.findOne({
+      where: { id: businessId, owner: { id: ownerId } },
+    });
+    if (!business) {
+      throw new NotFoundException('Business not found or not owned by user');
+    }
+    if (!business.termsAcceptedAt || !business.termsSignatureName || !business.termsSignatureUrl) {
+      throw new ForbiddenException('Please accept terms and upload signature before submitting');
+    }
+    if (!business.planStatus || business.planStatus !== 'ACTIVE') {
+      throw new ForbiddenException('Please complete plan payment before submitting');
+    }
+    business.status = BusinessStatus.CONTRACT_PENDING;
+    return this.businessRepo.save(business);
+  }
+
   async getServices(ownerId: string, businessId: string) {
     const business = await this.businessRepo.findOne({
       where: { id: businessId, owner: { id: ownerId } },

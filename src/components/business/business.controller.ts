@@ -234,6 +234,17 @@ export class BusinessController {
     );
   }
 
+  @Post(':id/submit')
+  @ApiOperation({ summary: 'Submit business application for admin review' })
+  @ApiParam({
+    name: 'id',
+    description: 'Business ID',
+    type: String,
+  })
+  submitApplication(@Req() req, @Param('id') id: string) {
+    return this.businessService.submitApplication(req.user.id, id);
+  }
+
   @Get(':id/services')
   @ApiOperation({ summary: 'Get services of my business' })
   @ApiBearerAuth()

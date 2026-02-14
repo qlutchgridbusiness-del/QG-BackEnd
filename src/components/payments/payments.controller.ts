@@ -186,17 +186,11 @@ export class PaymentsController {
       if (!business.termsAcceptedAt || !business.termsSignatureName) {
         throw new BadRequestException('Please accept terms before activation');
       }
-      const nextStatus =
-        business.status === BusinessStatus.ACTIVE ||
-        business.status === BusinessStatus.SUSPENDED
-          ? business.status
-          : BusinessStatus.CONTRACT_PENDING;
       business.planId = body.planId;
       business.planAmount = 0;
       business.planStatus = 'ACTIVE';
       business.planActivatedAt = new Date();
       business.planDueAt = null;
-      business.status = nextStatus;
       await this.businessRepo.save(business);
 
       return { success: true, free: true };
@@ -229,12 +223,6 @@ export class PaymentsController {
     business.planDueAt = new Date(
       Date.now() + PLAN_DURATION_DAYS * 24 * 60 * 60 * 1000,
     );
-    const nextStatus =
-      business.status === BusinessStatus.ACTIVE ||
-      business.status === BusinessStatus.SUSPENDED
-        ? business.status
-        : BusinessStatus.CONTRACT_PENDING;
-    business.status = nextStatus;
     await this.businessRepo.save(business);
 
     return {

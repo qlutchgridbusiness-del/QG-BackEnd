@@ -20,26 +20,23 @@ export class AdminSeedService implements OnModuleInit {
       return;
     }
 
-    let user = await this.userRepo.findOne({ where: { phone } });
-
-    if (!user && email) {
+    let user: User | null = null;
+    if (email) {
       user = await this.userRepo.findOne({ where: { email } });
+    }
+    if (!user && phone) {
+      user = await this.userRepo.findOne({ where: { phone } });
     }
 
     if (user) {
-      user.role = UserRole.ADMIN;
+      if (user.role !== UserRole.ADMIN) {
+        Logger.warn(
+          'Admin seed skipped: existing user found for admin email/phone. Use a unique admin email/phone.',
+        );
+        return;
+      }
       user.name = name || user.name;
       user.phone = phone || user.phone;
-
-      if (email) {
-        const emailOwner = await this.userRepo.findOne({ where: { email } });
-        if (!emailOwner || emailOwner.id === user.id) {
-          user.email = email;
-        } else {
-          Logger.warn('ADMIN_EMAIL already in use. Skipping email update.');
-        }
-      }
-
       await this.userRepo.save(user);
       Logger.log(`Admin user ensured for ${email || phone}`);
       return;
