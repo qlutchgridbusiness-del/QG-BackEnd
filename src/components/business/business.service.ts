@@ -125,6 +125,14 @@ export class BusinessService {
         'Your business is under review. Services can be added after approval.',
       );
     }
+    if (
+      business.status === BusinessStatus.CONTRACT_PENDING &&
+      business.planStatus === 'ACTIVE'
+    ) {
+      throw new ForbiddenException(
+        'Your application is submitted. Services can be updated after approval.',
+      );
+    }
 
     const entities = services.map((s) =>
       this.serviceRepo.create({
