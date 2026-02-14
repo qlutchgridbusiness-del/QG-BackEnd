@@ -112,17 +112,33 @@ export class AuthService {
       if (!phone) {
         throw new UnauthorizedException('Phone number missing');
       }
-      const tempToken = this.jwtService.sign(
+
+      // Create a minimal user immediately to bind the token to a real owner
+      const newUser = this.userRepo.create({
+        phone,
+        role: UserRole.USER,
+      });
+      await this.userRepo.save(newUser);
+
+      const token = this.jwtService.sign(
         {
-          phone,
-          purpose: 'OTP_VERIFIED',
+          sub: newUser.id,
+          role: newUser.role,
+          phone: newUser.phone,
+          email: newUser.email,
         },
-        { expiresIn: '60m' },
+        { expiresIn: '7d' },
       );
 
       return {
         isNewUser: true,
-        tempToken,
+        token,
+        user: {
+          id: newUser.id,
+          phone: newUser.phone,
+          role: newUser.role,
+          name: newUser.name,
+        },
       };
     }
 
@@ -149,20 +165,22 @@ export class AuthService {
     };
   }
 
-  async register(dto: RegisterDto, tempToken: string) {
-    // 🔐 Validate tempToken first
-    const payload = this.jwtService.verify(tempToken);
-
-    if (payload.phone !== dto.phone) {
-      throw new UnauthorizedException('Invalid temp token');
+  async register(dto: RegisterDto, token: string) {
+    // 🔐 Validate token first (new-user token or existing user token)
+    const payload = this.jwtService.verify(token);
+    let user = payload?.sub
+      ? await this.userRepo.findOne({ where: { id: payload.sub } })
+      : null;
+    if (!user && payload?.phone) {
+      user = await this.userRepo.findOne({ where: { phone: payload.phone } });
     }
     if (dto.role === 'user' && !dto.email) {
       throw new BadRequestException('Email is required for user registration');
     }
 
-    let user = await this.userRepo.findOne({
-      where: { phone: dto.phone },
-    });
+    if (user && user.phone !== dto.phone) {
+      throw new UnauthorizedException('Token does not match phone number');
+    }
 
     if (user) {
       // ✅ UPDATE existing user instead of INSERT

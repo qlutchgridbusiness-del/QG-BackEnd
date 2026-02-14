@@ -23,7 +23,7 @@ export class AuthController {
     return this.authService.requestOtp(phone);
   }
 
-  // 🔹 STEP 2: VERIFY OTP → returns tempToken
+  // 🔹 STEP 2: VERIFY OTP → returns token (even for new users)
   @Post('verify-otp')
   @ApiBody({ type: VerifyOtpDto })
   @ApiResponse({ status: 200, description: 'OTP verified successfully' })
@@ -31,7 +31,7 @@ export class AuthController {
     return this.authService.verifyOtp(dto.phone, dto.otp);
   }
 
-  // 🔹 STEP 3: REGISTER (requires tempToken in Authorization header)
+  // 🔹 STEP 3: REGISTER (requires token in Authorization header)
   @Post('register')
   @ApiBody({ type: RegisterDto })
   @ApiResponse({ status: 201, description: 'Registered successfully' })
@@ -43,8 +43,8 @@ export class AuthController {
       throw new UnauthorizedException('Authorization header missing');
     }
 
-    const tempToken = authHeader.replace('Bearer ', '').trim();
-    return this.authService.register(dto, tempToken);
+    const token = authHeader.replace('Bearer ', '').trim();
+    return this.authService.register(dto, token);
   }
 
 }
