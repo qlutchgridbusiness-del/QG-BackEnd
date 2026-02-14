@@ -117,6 +117,8 @@ export class AuthService {
       const newUser = this.userRepo.create({
         phone,
         role: UserRole.USER,
+        name: null,
+        email: null,
       });
       await this.userRepo.save(newUser);
 
