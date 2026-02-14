@@ -24,8 +24,32 @@ export class BusinessService {
     private readonly serviceRepo: Repository<Services>,
   ) {}
 
-  async createBusiness(ownerId: string, dto: CreateBusinessDto) {
-    const owner = await this.userRepo.findOne({ where: { id: ownerId } });
+  async createBusiness(
+    ownerId: string | undefined,
+    ownerPhone: string | undefined,
+    ownerEmail: string | undefined,
+    dto: CreateBusinessDto,
+  ) {
+    let owner: User | null = null;
+
+    if (ownerId) {
+      owner = await this.userRepo.findOne({ where: { id: ownerId } });
+    }
+
+    if (!owner && ownerPhone) {
+      owner = await this.userRepo.findOne({ where: { phone: ownerPhone } });
+    }
+
+    if (!owner && ownerPhone) {
+      owner = this.userRepo.create({
+        phone: ownerPhone,
+        name: dto.name,
+        email: ownerEmail || dto.email,
+        role: 'BUSINESS',
+      } as User);
+      await this.userRepo.save(owner);
+    }
+
     if (!owner) throw new NotFoundException('Owner not found');
 
     const business = this.businessRepo.create({

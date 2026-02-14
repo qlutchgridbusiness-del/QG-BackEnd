@@ -57,7 +57,12 @@ export class BusinessController {
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   create(@Req() req, @Body() dto: CreateBusinessDto) {
     this.ensureNotAdmin(req);
-    return this.businessService.createBusiness(req.user.id, dto);
+    return this.businessService.createBusiness(
+      req.user?.id,
+      req.user?.phone,
+      req.user?.email,
+      dto,
+    );
   }
 
   @Put(':id')
