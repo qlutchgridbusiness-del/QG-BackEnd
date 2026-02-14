@@ -51,6 +51,16 @@ export class BusinessService {
     if (!business) {
       throw new NotFoundException('Business not found or not owned by user');
     }
+    // If a business is still registering (no terms + no active plan),
+    // never block service additions even if status was set to SUSPENDED.
+    if (
+      business.status === BusinessStatus.SUSPENDED &&
+      !business.termsAcceptedAt &&
+      business.planStatus !== 'ACTIVE'
+    ) {
+      business.status = BusinessStatus.DRAFT;
+      await this.businessRepo.save(business);
+    }
 
     // NEVER allow status changes from business side
     delete (dto as any).status;
@@ -69,6 +79,7 @@ export class BusinessService {
         b.planDueAt &&
         b.planAmount &&
         b.planAmount > 0 &&
+        b.planStatus === 'ACTIVE' &&
         b.planDueAt.getTime() < now &&
         b.status === BusinessStatus.ACTIVE
       ) {
@@ -166,6 +177,7 @@ export class BusinessService {
       business.planDueAt &&
       business.planAmount &&
       business.planAmount > 0 &&
+      business.planStatus === 'ACTIVE' &&
       business.planDueAt.getTime() < Date.now() &&
       business.status === BusinessStatus.ACTIVE
     ) {
