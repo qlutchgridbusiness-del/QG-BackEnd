@@ -8,11 +8,10 @@ import {
 import { AdminBusinessesService } from './admin-businesses.service';
 import { AdminActionResponseDto } from '../dto/admin-response.dto';
 import { AdminBusinessDto } from './admin-businesses.dto';
-import { AdminGuard } from 'src/components/auth/admin.guard';
-import { JwtAuthGuard } from 'src/components/auth/jwt.auth-guard';
+import { BasicAuthGuard } from 'src/components/auth/basic-auth.guard';
 
 @ApiTags('Admin – Businesses')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(BasicAuthGuard)
 @Controller('admin/businesses')
 export class AdminBusinessesController {
   constructor(private readonly service: AdminBusinessesService) {}

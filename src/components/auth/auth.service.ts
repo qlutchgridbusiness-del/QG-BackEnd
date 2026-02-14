@@ -206,35 +206,6 @@ export class AuthService {
     return this.issueToken(user);
   }
 
-  async adminLogin(email: string, password: string) {
-    const adminEmail = process.env.ADMIN_EMAIL;
-    const adminPassword = process.env.ADMIN_PASSWORD;
-
-    if (!adminEmail || !adminPassword) {
-      throw new UnauthorizedException('Admin credentials not configured');
-    }
-
-    if (email !== adminEmail || password !== adminPassword) {
-      throw new UnauthorizedException('Invalid admin credentials');
-    }
-
-    let user = await this.userRepo.findOne({ where: { email: adminEmail } });
-    if (!user) {
-      user = await this.userRepo.save(
-        this.userRepo.create({
-          email: adminEmail,
-          name: 'Admin',
-          role: UserRole.ADMIN,
-          isActive: true,
-        }),
-      );
-    } else if (user.role !== UserRole.ADMIN) {
-      user.role = UserRole.ADMIN;
-      await this.userRepo.save(user);
-    }
-
-    return this.issueToken(user);
-  }
 
   // 🔹 ISSUE REAL JWT
   private issueToken(user: User) {

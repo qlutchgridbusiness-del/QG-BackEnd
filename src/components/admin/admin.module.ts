@@ -20,7 +20,6 @@ import { AdminKycService } from './kyc/admin-kyc.service';
 import { AdminContractsController } from './contracts/admin-contracts.controller';
 import { AdminContractsService } from './contracts/admin-contracts.service';
 import { PushModule } from '../push/push.module';
-import { AdminGuard } from '../auth/admin.guard';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, Business, BusinessKyc]), PushModule],
@@ -37,7 +36,6 @@ import { AdminGuard } from '../auth/admin.guard';
     AdminBusinessesService,
     AdminKycService,
     AdminContractsService,
-    AdminGuard,
   ],
 })
 export class AdminModule {}

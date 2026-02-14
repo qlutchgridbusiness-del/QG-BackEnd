@@ -9,11 +9,10 @@ import { AdminKycService } from './admin-kyc.service';
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AdminKycDto, RejectKycDto } from './admin-kyc.dto';
 import { AdminActionResponseDto } from '../dto/admin-response.dto';
-import { AdminGuard } from 'src/components/auth/admin.guard';
-import { JwtAuthGuard } from 'src/components/auth/jwt.auth-guard';
+import { BasicAuthGuard } from 'src/components/auth/basic-auth.guard';
 
 @ApiTags('Admin – Business KYC')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(BasicAuthGuard)
 @Controller('admin/kyc')
 export class AdminKycController {
   constructor(private readonly adminKyc: AdminKycService) {}
