@@ -215,11 +215,19 @@ export class BusinessService {
     if (!business) {
       throw new NotFoundException('Business not found or not owned by user');
     }
-    if (!business.termsAcceptedAt || !business.termsSignatureName || !business.termsSignatureUrl) {
-      throw new ForbiddenException('Please accept terms and upload signature before submitting');
+    if (
+      !business.termsAcceptedAt ||
+      !business.termsSignatureName ||
+      !business.termsSignatureUrl
+    ) {
+      throw new ForbiddenException(
+        'Please accept terms and upload signature before submitting',
+      );
     }
     if (!business.planStatus || business.planStatus !== 'ACTIVE') {
-      throw new ForbiddenException('Please complete plan payment before submitting');
+      throw new ForbiddenException(
+        'Please complete plan payment before submitting',
+      );
     }
     business.status = BusinessStatus.CONTRACT_PENDING;
     return this.businessRepo.save(business);
