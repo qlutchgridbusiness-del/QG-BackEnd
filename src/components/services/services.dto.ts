@@ -16,6 +16,11 @@ export enum PricingType {
   QUOTE = 'QUOTE',
 }
 
+export enum OfferingType {
+  SERVICE = 'SERVICE',
+  ACCESSORY = 'ACCESSORY',
+}
+
 export class CreateServiceDto {
   /** Service name shown to users */
   @ApiProperty({
@@ -90,6 +95,16 @@ export class CreateServiceDto {
   @IsOptional()
   @IsBoolean()
   available?: boolean;
+
+  /** Service vs Accessory */
+  @ApiPropertyOptional({
+    enum: OfferingType,
+    example: OfferingType.SERVICE,
+    description: 'Indicates if this entry is a service or accessory',
+  })
+  @IsOptional()
+  @IsEnum(OfferingType)
+  offeringType?: OfferingType;
 
   /** Internal status (ignored from client) */
   @ApiPropertyOptional({

@@ -8,6 +8,11 @@ export enum PricingType {
   QUOTE = 'QUOTE',
 }
 
+export enum OfferingType {
+  SERVICE = 'SERVICE',
+  ACCESSORY = 'ACCESSORY',
+}
+
 @Entity()
 export class Services {
   @PrimaryGeneratedColumn('uuid')
@@ -63,6 +68,13 @@ export class Services {
     default: ServiceStatus.DRAFT,
   })
   status: ServiceStatus;
+
+  @Column({
+    type: 'enum',
+    enum: OfferingType,
+    default: OfferingType.SERVICE,
+  })
+  offeringType: OfferingType;
 
   /* ---------------- Relations ---------------- */
 

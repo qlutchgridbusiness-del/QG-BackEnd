@@ -190,6 +190,7 @@ export class BusinessService {
     const entities = services.map((s) =>
       this.serviceRepo.create({
         ...s,
+        offeringType: (s as any).offeringType ?? undefined,
         business,
         status: ServiceStatus.DRAFT,
       }),
