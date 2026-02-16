@@ -248,4 +248,12 @@ export class AuthService {
       },
     };
   }
+
+  async refreshToken(userId: string) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    return this.issueToken(user);
+  }
 }

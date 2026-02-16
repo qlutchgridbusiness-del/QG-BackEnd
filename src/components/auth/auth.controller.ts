@@ -4,11 +4,14 @@ import {
   Controller,
   Post,
   Headers,
+  Req,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ApiBody, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto, VerifyOtpDto } from './auth.dto';
+import { JwtAuthGuard } from './jwt.auth-guard';
+import { UseGuards } from '@nestjs/common';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -45,6 +48,12 @@ export class AuthController {
 
     const token = authHeader.replace('Bearer ', '').trim();
     return this.authService.register(dto, token);
+  }
+
+  @Post('refresh')
+  @UseGuards(JwtAuthGuard)
+  async refresh(@Req() req) {
+    return this.authService.refreshToken(req.user.id);
   }
 
 }

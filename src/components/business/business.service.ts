@@ -51,6 +51,10 @@ export class BusinessService {
     }
 
     if (!owner) throw new NotFoundException('Owner not found');
+    if (owner.role !== 'BUSINESS') {
+      owner.role = 'BUSINESS' as any;
+      await this.userRepo.save(owner);
+    }
 
     const business = this.businessRepo.create({
       ...dto,

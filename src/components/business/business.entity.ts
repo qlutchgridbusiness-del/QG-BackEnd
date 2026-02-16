@@ -25,6 +25,9 @@ export class Business {
   email?: string;
 
   @Column({ nullable: true })
+  offeringType?: 'SERVICES' | 'ACCESSORIES';
+
+  @Column({ nullable: true })
   phone?: string;
 
   // 🔐 KYC

@@ -10,6 +10,9 @@ export class CreateBusinessDto {
   @ApiPropertyOptional({ example: 'info@company.com' })
   email?: string;
 
+  @ApiPropertyOptional({ enum: ['SERVICES', 'ACCESSORIES'] })
+  offeringType?: 'SERVICES' | 'ACCESSORIES';
+
   @ApiPropertyOptional({
     example: ['Garage / Mechanic', 'Painting'],
     isArray: true,
