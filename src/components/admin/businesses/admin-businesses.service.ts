@@ -35,12 +35,6 @@ export class AdminBusinessesService {
     if (!business.termsSignatureName || !business.termsSignatureUrl) {
       throw new BadRequestException('Digital signature is missing');
     }
-    if (!business.planStatus || business.planStatus !== 'ACTIVE') {
-      throw new BadRequestException('Plan payment is not completed');
-    }
-    if (!business.planId || !business.planActivatedAt) {
-      throw new BadRequestException('Plan details are incomplete');
-    }
     await this.businesses.update(id, { status: BusinessStatus.ACTIVE });
     return { message: 'Business activated' };
   }

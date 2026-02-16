@@ -267,11 +267,6 @@ export class BusinessService {
         'Please accept terms and upload signature before submitting',
       );
     }
-    if (!business.planStatus || business.planStatus !== 'ACTIVE') {
-      throw new ForbiddenException(
-        'Please complete plan payment before submitting',
-      );
-    }
     business.status = BusinessStatus.CONTRACT_PENDING;
     return this.businessRepo.save(business);
   }
