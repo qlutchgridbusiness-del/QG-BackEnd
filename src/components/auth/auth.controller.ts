@@ -31,7 +31,7 @@ export class AuthController {
   @ApiBody({ type: VerifyOtpDto })
   @ApiResponse({ status: 200, description: 'OTP verified successfully' })
   async verifyOtp(@Body() dto: VerifyOtpDto) {
-    return this.authService.verifyOtp(dto.phone, dto.otp);
+    return this.authService.verifyOtp(dto.phone, dto.otp, dto.role);
   }
 
   // 🔹 STEP 3: REGISTER (requires token in Authorization header)

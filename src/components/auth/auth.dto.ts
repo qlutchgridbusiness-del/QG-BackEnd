@@ -8,6 +8,7 @@ export class SendOtpDto {
 export class VerifyOtpDto {
   phone: string;
   otp: string;
+  role?: 'user' | 'business';
 }
 
 export class RegisterDto {

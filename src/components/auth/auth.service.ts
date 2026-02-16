@@ -26,7 +26,7 @@ export class AuthService {
   }
 
   // 🔹 VERIFY OTP → ISSUE TEMP TOKEN
-  async verifyOtp(phone: string, otp: string) {
+  async verifyOtp(phone: string, otp: string, role?: 'user' | 'business') {
     const valid = await this.otpService.verifyOtp(phone, otp);
 
     if (!valid) {
@@ -34,6 +34,8 @@ export class AuthService {
     }
 
     const user = await this.userRepo.findOne({ where: { phone } });
+    const requestedRole =
+      role === 'business' ? UserRole.BUSINESS : UserRole.USER;
 
     // 🆕 New user → temp token for registration
     if (!user) {
@@ -116,7 +118,7 @@ export class AuthService {
       // Create a minimal user immediately to bind the token to a real owner
       const newUser = this.userRepo.create({
         phone,
-        role: UserRole.USER,
+        role: requestedRole,
         name: null,
         email: null,
       });
@@ -144,7 +146,12 @@ export class AuthService {
       };
     }
 
-    // ✅ Existing user → login token
+    // ✅ Existing user → login token (enforce role)
+    if (role && user.role !== requestedRole) {
+      throw new UnauthorizedException(
+        `Phone is already registered as ${user.role}. Use that login.`,
+      );
+    }
     const token = this.jwtService.sign(
       {
         sub: user.id, // keep consistent with JwtStrategy
@@ -185,10 +192,17 @@ export class AuthService {
     }
 
     if (user) {
+      if (
+        (dto.role === 'business' && user.role !== UserRole.BUSINESS) ||
+        (dto.role === 'user' && user.role !== UserRole.USER)
+      ) {
+        throw new UnauthorizedException(
+          `Phone is already registered as ${user.role}. Use that flow.`,
+        );
+      }
       // ✅ UPDATE existing user instead of INSERT
       user.name = dto.name ?? user.name;
       user.email = dto.email ?? user.email;
-      user.role = dto.role === 'business' ? UserRole.BUSINESS : UserRole.USER;
 
       await this.userRepo.save(user);
     } else {
