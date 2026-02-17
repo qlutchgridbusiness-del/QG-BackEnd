@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Business } from 'src/components/business/business.entity';
@@ -27,13 +31,21 @@ export class AdminBusinessesService {
   async activateBusiness(id: string) {
     const business = await this.getBusiness(id);
     if (business.status !== BusinessStatus.CONTRACT_PENDING) {
-      throw new BadRequestException('Business is not pending contract approval');
+      throw new BadRequestException(
+        'Business is not pending contract approval',
+      );
     }
     if (!business.termsAcceptedAt) {
       throw new BadRequestException('Terms not accepted by business');
     }
     if (!business.termsSignatureName || !business.termsSignatureUrl) {
       throw new BadRequestException('Digital signature is missing');
+    }
+    if (!business.planStatus || business.planStatus !== 'ACTIVE') {
+      throw new BadRequestException('Plan payment is not completed');
+    }
+    if (!business.planId || !business.planActivatedAt) {
+      throw new BadRequestException('Plan details are incomplete');
     }
     await this.businesses.update(id, { status: BusinessStatus.ACTIVE });
     return { message: 'Business activated' };
