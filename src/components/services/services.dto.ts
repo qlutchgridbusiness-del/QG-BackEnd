@@ -96,6 +96,14 @@ export class CreateServiceDto {
   @IsBoolean()
   available?: boolean;
 
+  /** Service images */
+  @ApiPropertyOptional({
+    example: ['https://.../image1.jpg'],
+    description: 'Image URLs for this service',
+  })
+  @IsOptional()
+  images?: string[];
+
   /** Service vs Accessory */
   @ApiPropertyOptional({
     enum: OfferingType,

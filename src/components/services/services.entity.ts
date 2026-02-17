@@ -59,6 +59,9 @@ export class Services {
   @Column({ nullable: true })
   durationMinutes?: number;
 
+  @Column({ type: 'text', array: true, nullable: true })
+  images?: string[];
+
   @Column({ default: true })
   available: boolean;
 

@@ -327,7 +327,15 @@ export class BusinessService {
 
     if (!service) throw new NotFoundException();
     if (service.business.owner.id !== ownerId) throw new ForbiddenException();
-    if (service.business.status !== BusinessStatus.ACTIVE) {
+    const allowedStatuses = [
+      BusinessStatus.DRAFT,
+      BusinessStatus.PROFILE_COMPLETED,
+      BusinessStatus.CONTRACT_PENDING,
+      BusinessStatus.KYC_PENDING,
+      BusinessStatus.KYC_UNDER_REVIEW,
+      BusinessStatus.ACTIVE,
+    ];
+    if (!allowedStatuses.includes(service.business.status)) {
       throw new ForbiddenException(
         'Your business is under review. Services can be updated after approval.',
       );
