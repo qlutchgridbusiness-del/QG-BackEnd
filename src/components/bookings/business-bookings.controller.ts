@@ -23,6 +23,7 @@ import {
 import { JwtAuthGuard } from '../auth/jwt.auth-guard';
 import { BookingService } from './bookings.service';
 import { Booking } from './bookings.entity';
+import { ProposeQuoteDto } from './bookings.dto';
 
 @ApiTags('Business Bookings')
 @ApiBearerAuth()
@@ -124,6 +125,16 @@ export class BusinessBookingsController {
     @Body('beforeImages') beforeImages: string[],
   ) {
     return this.bookingService.startService(req.user.id, id, beforeImages);
+  }
+
+  @Put(':id/quote')
+  @ApiOperation({ summary: 'Propose a quote' })
+  proposeQuote(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() body: ProposeQuoteDto,
+  ) {
+    return this.bookingService.proposeQuote(req.user.id, id, body);
   }
 
   @Put(':id/complete-service')

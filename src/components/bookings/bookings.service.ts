@@ -8,7 +8,7 @@ import { Booking, BookingStatus } from './bookings.entity';
 import { Business } from '../business/business.entity';
 import { Services } from '../services/services.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateBookingDto } from './bookings.dto';
+import { CreateBookingDto, ProposeQuoteDto } from './bookings.dto';
 import { WhatsappService } from '../notifications/whatsapp.service';
 import { DltService } from '../notifications/dlt.service';
 import { PushService } from '../push/push.service';
@@ -131,6 +131,16 @@ export class BookingService {
     if (booking.status !== BookingStatus.REQUESTED)
       throw new ForbiddenException();
 
+    if (
+      booking.service?.pricingType &&
+      ['RANGE', 'QUOTE'].includes(booking.service.pricingType) &&
+      !booking.quoteAmount
+    ) {
+      throw new ForbiddenException(
+        'Quote required before accepting this booking',
+      );
+    }
+
     booking.status = BookingStatus.BUSINESS_ACCEPTED;
     const saved = await this.bookingRepo.save(booking);
     await this.whatsappService.notifyUser(saved, 'BOOKING_ACCEPTED');
@@ -151,6 +161,30 @@ export class BookingService {
         url: '/business-dashboard/bookings',
       });
     }
+    return saved;
+  }
+
+  async proposeQuote(ownerId: string, bookingId: string, dto: ProposeQuoteDto) {
+    const booking = await this.getBusinessBooking(ownerId, bookingId);
+    if (booking.status !== BookingStatus.REQUESTED)
+      throw new ForbiddenException();
+
+    if (!dto.quoteAmount || dto.quoteAmount <= 0) {
+      throw new ForbiddenException('Valid quote amount required');
+    }
+
+    booking.quoteAmount = dto.quoteAmount;
+    booking.status = BookingStatus.QUOTE_PROPOSED;
+    const saved = await this.bookingRepo.save(booking);
+
+    if (saved.user?.id) {
+      await this.pushService.notifyUser(saved.user.id, {
+        title: 'Quote Proposed',
+        body: `Quote received for ${saved.service?.name}. Please confirm to proceed.`,
+        url: `/user-dashboard/bookings/${saved.id}`,
+      });
+    }
+
     return saved;
   }
 
@@ -347,12 +381,39 @@ export class BookingService {
     return { success: true };
   }
 
+  async acceptQuote(userId: string, bookingId: string) {
+    const booking = await this.getMyBookingById(userId, bookingId);
+
+    if (booking.status !== BookingStatus.QUOTE_PROPOSED)
+      throw new ForbiddenException('No quote to accept');
+
+    booking.status = BookingStatus.BUSINESS_ACCEPTED;
+    const saved = await this.bookingRepo.save(booking);
+
+    if (saved.business?.owner?.id) {
+      await this.pushService.notifyUser(saved.business.owner.id, {
+        title: 'Quote Accepted',
+        body: `User accepted quote for booking ${saved.id.slice(0, 6)}.`,
+        url: '/business-dashboard/bookings',
+      });
+    }
+    if (saved.user?.id) {
+      await this.pushService.notifyUser(saved.user.id, {
+        title: 'Booking Confirmed',
+        body: `Your booking is confirmed. Business will start the service.`,
+        url: `/user-dashboard/bookings/${saved.id}`,
+      });
+    }
+
+    return saved;
+  }
+
   // ================= INTERNAL =================
 
   private async getBusinessBooking(ownerId: string, bookingId: string) {
     const booking = await this.bookingRepo.findOne({
       where: { id: bookingId },
-      relations: ['business', 'business.owner', 'user'],
+      relations: ['business', 'business.owner', 'user', 'service'],
     });
 
     if (!booking) throw new NotFoundException();

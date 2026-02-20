@@ -42,4 +42,10 @@ export class BookingController {
   pickupRequest(@Req() req, @Param('id') id: string) {
     return this.bookingService.requestPickup(req.user.id, id);
   }
+
+  @Post(':id/accept-quote')
+  @ApiOperation({ summary: 'User accepts quote' })
+  acceptQuote(@Req() req, @Param('id') id: string) {
+    return this.bookingService.acceptQuote(req.user.id, id);
+  }
 }

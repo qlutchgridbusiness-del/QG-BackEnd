@@ -31,3 +31,13 @@ export class CreateBookingDto {
   @IsString()
   requestNotes?: string;
 }
+
+export class ProposeQuoteDto {
+  @ApiProperty()
+  quoteAmount: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  quoteNotes?: string;
+}

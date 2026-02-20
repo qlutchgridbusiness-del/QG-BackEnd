@@ -15,6 +15,8 @@ export enum BookingStatus {
   BUSINESS_ACCEPTED = 'BUSINESS_ACCEPTED',
   BUSINESS_REJECTED = 'BUSINESS_REJECTED',
 
+  QUOTE_PROPOSED = 'QUOTE_PROPOSED',
+
   SERVICE_STARTED = 'SERVICE_STARTED',
   SERVICE_COMPLETED = 'SERVICE_COMPLETED',
 
@@ -45,6 +47,10 @@ export class Booking {
   // 💰 final payable amount (after service)
   @Column({ type: 'decimal', nullable: true })
   totalAmount?: number;
+
+  // 💬 quoted amount (before user accepts)
+  @Column({ type: 'decimal', nullable: true })
+  quoteAmount?: number;
 
   // 📸 images
   @Column({ type: 'jsonb', nullable: true })
