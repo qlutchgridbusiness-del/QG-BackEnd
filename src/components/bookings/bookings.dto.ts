@@ -1,5 +1,5 @@
 // src/components/bookings/bookings.dto.ts
-import { IsUUID, IsDateString, IsOptional } from 'class-validator';
+import { IsUUID, IsDateString, IsOptional, IsString } from 'class-validator';
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 
 export class CreateBookingDto {
@@ -16,6 +16,18 @@ export class CreateBookingDto {
   @IsDateString()
   scheduledAt?: string;
 
-  @ApiProperty()
-  amount: number;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  vehicleBrand?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  vehicleType?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  requestNotes?: string;
 }

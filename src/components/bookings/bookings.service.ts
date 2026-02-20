@@ -52,6 +52,9 @@ export class BookingService {
       scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : null,
       totalAmount: null, // decided after service
       status: BookingStatus.REQUESTED,
+      vehicleBrand: dto.vehicleBrand || null,
+      vehicleType: dto.vehicleType || null,
+      requestNotes: dto.requestNotes || null,
     });
 
     const saved = await this.bookingRepo.save(booking);

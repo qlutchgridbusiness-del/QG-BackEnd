@@ -66,6 +66,15 @@ export class Booking {
   @Column({ nullable: true })
   razorpayPaymentId?: string;
 
+  @Column({ nullable: true })
+  vehicleBrand?: string;
+
+  @Column({ nullable: true })
+  vehicleType?: string;
+
+  @Column({ type: 'text', nullable: true })
+  requestNotes?: string;
+
   @CreateDateColumn()
   createdAt: Date;
 }
