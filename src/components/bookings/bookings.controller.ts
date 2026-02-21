@@ -2,7 +2,7 @@
 import { Controller, Post, Body, Req, Get, Param, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BookingService } from './bookings.service';
-import { CreateBookingDto } from './bookings.dto';
+import { CreateBookingDto, RejectQuoteDto } from './bookings.dto';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.auth-guard';
 
@@ -47,5 +47,15 @@ export class BookingController {
   @ApiOperation({ summary: 'User accepts quote' })
   acceptQuote(@Req() req, @Param('id') id: string) {
     return this.bookingService.acceptQuote(req.user.id, id);
+  }
+
+  @Post(':id/reject-quote')
+  @ApiOperation({ summary: 'User rejects quote' })
+  rejectQuote(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() dto: RejectQuoteDto,
+  ) {
+    return this.bookingService.rejectQuote(req.user.id, id, dto);
   }
 }

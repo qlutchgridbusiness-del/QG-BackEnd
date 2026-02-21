@@ -8,7 +8,7 @@ import { Booking, BookingStatus } from './bookings.entity';
 import { Business } from '../business/business.entity';
 import { Services } from '../services/services.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateBookingDto, ProposeQuoteDto } from './bookings.dto';
+import { CreateBookingDto, ProposeQuoteDto, RejectQuoteDto } from './bookings.dto';
 import { WhatsappService } from '../notifications/whatsapp.service';
 import { DltService } from '../notifications/dlt.service';
 import { PushService } from '../push/push.service';
@@ -54,7 +54,7 @@ export class BookingService {
       status: BookingStatus.REQUESTED,
       vehicleBrand: dto.vehicleBrand || null,
       vehicleType: dto.vehicleType || null,
-      requestNotes: dto.requestNotes || null,
+      vehicleModel: dto.vehicleModel || null,
     });
 
     const saved = await this.bookingRepo.save(booking);
@@ -222,8 +222,14 @@ export class BookingService {
   ) {
     const booking = await this.getBusinessBooking(ownerId, bookingId);
 
-    if (booking.status !== BookingStatus.BUSINESS_ACCEPTED)
+    if (booking.status === BookingStatus.REQUESTED) {
+      if (booking.service?.pricingType !== 'FIXED') {
+        throw new ForbiddenException();
+      }
+      booking.status = BookingStatus.BUSINESS_ACCEPTED;
+    } else if (booking.status !== BookingStatus.BUSINESS_ACCEPTED) {
       throw new ForbiddenException();
+    }
 
     booking.beforeServiceImages = beforeImages;
     booking.status = BookingStatus.SERVICE_STARTED;
@@ -401,6 +407,34 @@ export class BookingService {
       await this.pushService.notifyUser(saved.user.id, {
         title: 'Booking Confirmed',
         body: `Your booking is confirmed. Business will start the service.`,
+        url: `/user-dashboard/bookings/${saved.id}`,
+      });
+    }
+
+    return saved;
+  }
+
+  async rejectQuote(userId: string, bookingId: string, dto?: RejectQuoteDto) {
+    const booking = await this.getMyBookingById(userId, bookingId);
+
+    if (booking.status !== BookingStatus.QUOTE_PROPOSED)
+      throw new ForbiddenException('No quote to reject');
+
+    booking.status = BookingStatus.BUSINESS_REJECTED;
+    booking.cancelReason = dto?.reason;
+    const saved = await this.bookingRepo.save(booking);
+
+    if (saved.business?.owner?.id) {
+      await this.pushService.notifyUser(saved.business.owner.id, {
+        title: 'Quote Rejected',
+        body: `User rejected quote for booking ${saved.id.slice(0, 6)}.`,
+        url: '/business-dashboard/bookings',
+      });
+    }
+    if (saved.user?.id) {
+      await this.pushService.notifyUser(saved.user.id, {
+        title: 'Quote Rejected',
+        body: `You rejected the quote. Booking cancelled.`,
         url: `/user-dashboard/bookings/${saved.id}`,
       });
     }

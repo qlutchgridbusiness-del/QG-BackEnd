@@ -79,7 +79,7 @@ export class Booking {
   vehicleType?: string;
 
   @Column({ type: 'text', nullable: true })
-  requestNotes?: string;
+  vehicleModel?: string;
 
   @CreateDateColumn()
   createdAt: Date;

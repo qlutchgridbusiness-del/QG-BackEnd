@@ -29,7 +29,7 @@ export class CreateBookingDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  requestNotes?: string;
+  vehicleModel?: string;
 }
 
 export class ProposeQuoteDto {
@@ -40,4 +40,11 @@ export class ProposeQuoteDto {
   @IsOptional()
   @IsString()
   quoteNotes?: string;
+}
+
+export class RejectQuoteDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  reason?: string;
 }
